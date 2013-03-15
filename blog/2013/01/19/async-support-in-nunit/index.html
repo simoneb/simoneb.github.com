@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Async support in NUnit - Simone Busoli</title>
+  <meta name="author" content="Simone Busoli">
+
+  
+  <meta name="description" content=".NET&rsquo;s version 5 of the C# compiler introduced support for an interesting feature related to multithreaded programming, available via the new &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://simoneb.github.com/blog/2013/01/19/async-support-in-nunit">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/simoneb" rel="alternate" title="Simone Busoli" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-27143372-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simone Busoli</a></h1>
+  
+    <h2>about design, development, profession and avoidance of fluff</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="http://feeds.feedburner.com/simoneb" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:simoneb.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/about">About</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Async Support in NUnit</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-19T00:00:00+01:00" pubdate data-updated="true">Jan 19<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>.NET&rsquo;s version 5 of the C# compiler introduced support for an interesting feature related to multithreaded programming, available via the new <em>async</em> and <em>await</em> keywords.</p>
+
+<p>This post is not much about the feature itself as plenty of information is available online, but rather the support that was introduced for it in NUnit. Here is a simple NUnit test:</p>
+
+<p><script src="https://gist.github.com/4575577.js"></script></p>
+
+<p>So far so good, but let&rsquo;s assume that invoking that method on the 8 ball is really expensive in terms of execution time and you would like your production code invoking it to not just sit and wait until it completes.
+That&rsquo;s where the async feature fits, and you could change the method to be an async, Task-returning one instead. How to make <em>that specific</em> method asynchronous is definitely out of scope here though.</p>
+
+<h3>Testing asynchronous code</h3>
+
+<p>In order to call the new method asynchronously the test code would need to be adapted as shown here:</p>
+
+<p><script src="https://gist.github.com/4575669.js"></script></p>
+
+<p>Awaiting the result of the method implies that the test method has to be marked as async, too.
+Now, assuming that you&rsquo;re not planning to change job you would really expect the test to fail, which it instead doesn&rsquo;t if run with a version of NUnit older than 2.6.2.</p>
+
+<p>The reason behind this incorrect behavior is that asynchronous methods are rewritten by the C# compiler in a way that they return control to the caller as soon as they await on an operation which has not completed yet, as is the case with the invocation of the <em>ShouldIChangeJob</em> method. In this case therefore the control is returned to the code which called the <em>OneSimpleTest</em> method, which turns out to be NUnit itself.</p>
+
+<p>Up to version 2.6.2 of NUnit the test runner always assumed that as soon as a test method returned then its execution was complete, and thus if no assertion failures were reported the test was successful.
+This is no longer the case with asynchronous methods, as we just found out, because the now asynchronous test returns immediately after invoking <em>ShouldIChangeJob</em> on line 5.</p>
+
+<p>Without any support from NUnit there was a simple fix available already, which was to <em>Wait</em> on the <em>Task</em> returned by the asynchronous method rather than <em>await</em> it.</p>
+
+<p><script src="https://gist.github.com/4575750.js"></script></p>
+
+<p>This would work perfectly, although it&rsquo;s not as nice as being able to write the test code in the same way you would write the production code, that is, by using the await keyword. This has the additional disadvantage of exception handling behaving differently between await and Wait. When using await the code looks like everything is happening sequentially, and you can catch exceptions in the same way you do with sequential code. If <em>ShouldIChangeJob</em> threw an exception of the fictitious type <em>TimeoutException</em> you would see exactly that exception bubbling up from your code. When using Wait instead a <em>System.AggregateException</em> would bubble up, which is a sort of container for multiple exceptions which might have happened during an asynchronous operation, and would wrap the real <em>TimeoutException</em>. This of course makes await more intuitive and preferable over Wait.</p>
+
+<h3>Just a matter of Waiting</h3>
+
+<p>Introducing this support in NUnit doesn&rsquo;t necessarily mean that NUnit has now become asynchronous or that it allows to run tests in parallel. This is something which is being worked on for the next 3rd major release of NUnit though.</p>
+
+<p>What we did in NUnit 2 was to allow users to write async tests without worrying about tests completing before their assertions were even evaluated, in addition to supporting thorough use of asynchronous methods in some specific framework use cases.
+In other words, when invoking asynchronous test methods NUnit will &ldquo;sit and wait&rdquo; on your behalf, until the test method, along with all the asynchronous operations it invokes, has finally completed.</p>
+
+<h3>Behind the scenes</h3>
+
+<p>As should be clear by now NUnit&rsquo;s support for async methods is mainly a matter of detecting async methods, calling Wait on the Task returned by them and handling exceptions accordingly. This is true in most cases, although NUnit&rsquo;s need to be compatible with .NET 2.0 means that all of this logic needs to be implemented without referencing any .NET > 2.0 assemblies.</p>
+
+<p>Yet this was still not as straightforward, but we really strived to open up as many intuitive usages of await/async as possible so to relieve the users from having to even think about it.</p>
+
+<p>Although you might not have noticed it you&rsquo;ve already encountered one example of why this is not trivial. In the asynchronous sample above you can see that the test method is void.
+What does it mean exactly? Well, it means that there is no Task on which to call Wait, and that really waiting for it to complete means setting up a new <em>SynchronizationContext</em> to hook into the .NET implementation of the async/await feature.</p>
+
+<p>Although asynchronous void methods were not designed for this purpose and Microsoft itself discourages using them besides in event handlers, we really wanted to support them for a couple of reasons:</p>
+
+<ol>
+<li>Not supporting them would mean that NUnit would throw an exception at runtime every time a test is written with an async void signature</li>
+<li>Most users would probably repeatedly commit the same mistake of writing asynchronous test methods as void async because no one really cares about their return value</li>
+</ol>
+
+
+<p>We thought that the two reasons above would lead to a frustrating user experience and decided to support async void tests as well as Task-returning ones. This choice came with some drawbacks too:</p>
+
+<ol>
+<li>The ways async void methods interact with the SynchronizationContext in which they run is undocumented and might change in the future, which opens up the possibility of breaking NUnit&rsquo;s implementation</li>
+<li>Switching the SynchronizationContext in which the test method runs (the way NUnit supports async void tests, that is) might affect even up to a great extent the flow of the code wrapped by the new SynchronizationContext</li>
+</ol>
+
+
+<p>We though that these two issues alone did not justify the poor user experience and we opted to fully support async void tests.</p>
+
+<h4>If not void, what?</h4>
+
+<p>Now, although it seems quite reasonable to write the above asynchronous test as one returning void it is equally valid to write it so that it returns a Task instead.</p>
+
+<p><script src="https://gist.github.com/4575918.js"></script></p>
+
+<p>It is actually more advisable to do so if you are especially interested about forwards compatibility of your code for the reasons explained above. If you do this NUnit will not have to jump through hoops to run it correctly and will simply fall back to waiting on the returned task.</p>
+
+<h3>async, where else</h3>
+
+<p>As briefly mentioned earlier support for await/async in NUnit 2 goes beyond test methods. The good thing about it is that in most cases you won&rsquo;t have to think about whether it is supported or not, because it most likely is.</p>
+
+<p>In any case here&rsquo;s a by-no-means complete overview of places where we had to do some relevant work.</p>
+
+<h4>Test cases checking results via Task return values</h4>
+
+<p>Methods marked with TestCaseAttribute can return values, which are then checked against the Result property of the test case. They now support returning result asynchronously:</p>
+
+<p><script src="https://gist.github.com/4577982.js"></script></p>
+
+<h4>Async lambdas</h4>
+
+<p>The async support went slightly beyond test methods, and extended to framework features which accept lambda expression as their arguments:</p>
+
+<p><script src="https://gist.github.com/4578097.js"></script></p>
+
+<p>Framework support is not yet available in NUnit 2.6.2, it will be in the next build.</p>
+
+<h4>Test context availability</h4>
+
+<p>If you don&rsquo;t know about <a href="http://nunit.org/index.php?p=testContext&amp;r=2.6.2">TestContext</a> I suggest you check it out as it might come handy in a bunch of scenarios. If you&rsquo;re already using it, just be aware that it is now accessible anywhere inside the body of asynchronous tests, which is how you would expect it to be.</p>
+
+<h3>What else?</h3>
+
+<p>This feature has been ported to the upcoming major release 3.0 of NUnit as well as to NUnitLite to make it available consistently throughout the whole testing platform.</p>
+
+<p>If there&rsquo;s anything we&rsquo;ve missed feel free to let us know on the NUnit&rsquo;s <a href="http://groups.google.com/group/nunit-discuss">mailing list</a>.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Simone Busoli</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-19T00:00:00+01:00" pubdate data-updated="true">Jan 19<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://simoneb.github.com/blog/2013/01/19/async-support-in-nunit/" data-via="simonebu" data-counturl="http://simoneb.github.com/blog/2013/01/19/async-support-in-nunit/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/10/28/nunit-via-linqpad/" title="Previous Post: NUnit via LINQPad">&laquo; NUnit via LINQPad</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/01/19/async-support-in-nunit/">Async support in NUnit</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, present and future of .NET assembly merging</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/19/speaking-s-overrated/">Speaking's overrated</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Simone Busoli -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

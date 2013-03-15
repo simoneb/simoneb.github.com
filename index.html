@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>simoneb</title>
+  <title>Simone Busoli</title>
   <meta name="author" content="Simone Busoli">
 
   
-  <meta name="description" content=" Blog Archives Recent Posts ">
+  <meta name="description" content=".NET&rsquo;s version 5 of the C# compiler introduced support for an interesting feature related to multithreaded programming, available via the new &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -21,7 +21,7 @@
   <link rel="canonical" href="http://simoneb.github.com">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="http://feeds.feedburner.com/simoneb" rel="alternate" title="simoneb" type="application/atom+xml">
+  <link href="http://feeds.feedburner.com/simoneb" rel="alternate" title="Simone Busoli" type="application/atom+xml">
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
@@ -31,12 +31,24 @@
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 
   
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-27143372-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
 
 </head>
 
 <body   >
   <header role="banner"><hgroup>
-  <h1><a href="/">simoneb</a></h1>
+  <h1><a href="/">Simone Busoli</a></h1>
   
     <h2>about design, development, profession and avoidance of fluff</h2>
   
@@ -56,7 +68,8 @@
 </form>
   
 <ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/projects">Projects</a></li>
   <li><a href="/blog/archives">Archives</a></li>
 </ul>
 
@@ -65,6 +78,313 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/01/19/async-support-in-nunit/">Async Support in NUnit</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-19T00:00:00+01:00" pubdate data-updated="true">Jan 19<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>.NET&rsquo;s version 5 of the C# compiler introduced support for an interesting feature related to multithreaded programming, available via the new <em>async</em> and <em>await</em> keywords.</p>
+
+<p>This post is not much about the feature itself as plenty of information is available online, but rather the support that was introduced for it in NUnit. Here is a simple NUnit test:</p>
+
+<p><script src="https://gist.github.com/4575577.js"></script></p>
+
+<p>So far so good, but let&rsquo;s assume that invoking that method on the 8 ball is really expensive in terms of execution time and you would like your production code invoking it to not just sit and wait until it completes.
+That&rsquo;s where the async feature fits, and you could change the method to be an async, Task-returning one instead. How to make <em>that specific</em> method asynchronous is definitely out of scope here though.</p>
+
+<h3>Testing asynchronous code</h3>
+
+<p>In order to call the new method asynchronously the test code would need to be adapted as shown here:</p>
+
+<p><script src="https://gist.github.com/4575669.js"></script></p>
+
+<p>Awaiting the result of the method implies that the test method has to be marked as async, too.
+Now, assuming that you&rsquo;re not planning to change job you would really expect the test to fail, which it instead doesn&rsquo;t if run with a version of NUnit older than 2.6.2.</p>
+
+<p>The reason behind this incorrect behavior is that asynchronous methods are rewritten by the C# compiler in a way that they return control to the caller as soon as they await on an operation which has not completed yet, as is the case with the invocation of the <em>ShouldIChangeJob</em> method. In this case therefore the control is returned to the code which called the <em>OneSimpleTest</em> method, which turns out to be NUnit itself.</p>
+
+<p>Up to version 2.6.2 of NUnit the test runner always assumed that as soon as a test method returned then its execution was complete, and thus if no assertion failures were reported the test was successful.
+This is no longer the case with asynchronous methods, as we just found out, because the now asynchronous test returns immediately after invoking <em>ShouldIChangeJob</em> on line 5.</p>
+
+<p>Without any support from NUnit there was a simple fix available already, which was to <em>Wait</em> on the <em>Task</em> returned by the asynchronous method rather than <em>await</em> it.</p>
+
+<p><script src="https://gist.github.com/4575750.js"></script></p>
+
+<p>This would work perfectly, although it&rsquo;s not as nice as being able to write the test code in the same way you would write the production code, that is, by using the await keyword. This has the additional disadvantage of exception handling behaving differently between await and Wait. When using await the code looks like everything is happening sequentially, and you can catch exceptions in the same way you do with sequential code. If <em>ShouldIChangeJob</em> threw an exception of the fictitious type <em>TimeoutException</em> you would see exactly that exception bubbling up from your code. When using Wait instead a <em>System.AggregateException</em> would bubble up, which is a sort of container for multiple exceptions which might have happened during an asynchronous operation, and would wrap the real <em>TimeoutException</em>. This of course makes await more intuitive and preferable over Wait.</p>
+
+<h3>Just a matter of Waiting</h3>
+
+<p>Introducing this support in NUnit doesn&rsquo;t necessarily mean that NUnit has now become asynchronous or that it allows to run tests in parallel. This is something which is being worked on for the next 3rd major release of NUnit though.</p>
+
+<p>What we did in NUnit 2 was to allow users to write async tests without worrying about tests completing before their assertions were even evaluated, in addition to supporting thorough use of asynchronous methods in some specific framework use cases.
+In other words, when invoking asynchronous test methods NUnit will &ldquo;sit and wait&rdquo; on your behalf, until the test method, along with all the asynchronous operations it invokes, has finally completed.</p>
+
+<h3>Behind the scenes</h3>
+
+<p>As should be clear by now NUnit&rsquo;s support for async methods is mainly a matter of detecting async methods, calling Wait on the Task returned by them and handling exceptions accordingly. This is true in most cases, although NUnit&rsquo;s need to be compatible with .NET 2.0 means that all of this logic needs to be implemented without referencing any .NET > 2.0 assemblies.</p>
+
+<p>Yet this was still not as straightforward, but we really strived to open up as many intuitive usages of await/async as possible so to relieve the users from having to even think about it.</p>
+
+<p>Although you might not have noticed it you&rsquo;ve already encountered one example of why this is not trivial. In the asynchronous sample above you can see that the test method is void.
+What does it mean exactly? Well, it means that there is no Task on which to call Wait, and that really waiting for it to complete means setting up a new <em>SynchronizationContext</em> to hook into the .NET implementation of the async/await feature.</p>
+
+<p>Although asynchronous void methods were not designed for this purpose and Microsoft itself discourages using them besides in event handlers, we really wanted to support them for a couple of reasons:</p>
+
+<ol>
+<li>Not supporting them would mean that NUnit would throw an exception at runtime every time a test is written with an async void signature</li>
+<li>Most users would probably repeatedly commit the same mistake of writing asynchronous test methods as void async because no one really cares about their return value</li>
+</ol>
+
+
+<p>We thought that the two reasons above would lead to a frustrating user experience and decided to support async void tests as well as Task-returning ones. This choice came with some drawbacks too:</p>
+
+<ol>
+<li>The ways async void methods interact with the SynchronizationContext in which they run is undocumented and might change in the future, which opens up the possibility of breaking NUnit&rsquo;s implementation</li>
+<li>Switching the SynchronizationContext in which the test method runs (the way NUnit supports async void tests, that is) might affect even up to a great extent the flow of the code wrapped by the new SynchronizationContext</li>
+</ol>
+
+
+<p>We though that these two issues alone did not justify the poor user experience and we opted to fully support async void tests.</p>
+
+<h4>If not void, what?</h4>
+
+<p>Now, although it seems quite reasonable to write the above asynchronous test as one returning void it is equally valid to write it so that it returns a Task instead.</p>
+
+<p><script src="https://gist.github.com/4575918.js"></script></p>
+
+<p>It is actually more advisable to do so if you are especially interested about forwards compatibility of your code for the reasons explained above. If you do this NUnit will not have to jump through hoops to run it correctly and will simply fall back to waiting on the returned task.</p>
+
+<h3>async, where else</h3>
+
+<p>As briefly mentioned earlier support for await/async in NUnit 2 goes beyond test methods. The good thing about it is that in most cases you won&rsquo;t have to think about whether it is supported or not, because it most likely is.</p>
+
+<p>In any case here&rsquo;s a by-no-means complete overview of places where we had to do some relevant work.</p>
+
+<h4>Test cases checking results via Task return values</h4>
+
+<p>Methods marked with TestCaseAttribute can return values, which are then checked against the Result property of the test case. They now support returning result asynchronously:</p>
+
+<p><script src="https://gist.github.com/4577982.js"></script></p>
+
+<h4>Async lambdas</h4>
+
+<p>The async support went slightly beyond test methods, and extended to framework features which accept lambda expression as their arguments:</p>
+
+<p><script src="https://gist.github.com/4578097.js"></script></p>
+
+<p>Framework support is not yet available in NUnit 2.6.2, it will be in the next build.</p>
+
+<h4>Test context availability</h4>
+
+<p>If you don&rsquo;t know about <a href="http://nunit.org/index.php?p=testContext&amp;r=2.6.2">TestContext</a> I suggest you check it out as it might come handy in a bunch of scenarios. If you&rsquo;re already using it, just be aware that it is now accessible anywhere inside the body of asynchronous tests, which is how you would expect it to be.</p>
+
+<h3>What else?</h3>
+
+<p>This feature has been ported to the upcoming major release 3.0 of NUnit as well as to NUnitLite to make it available consistently throughout the whole testing platform.</p>
+
+<p>If there&rsquo;s anything we&rsquo;ve missed feel free to let us know on the NUnit&rsquo;s <a href="http://groups.google.com/group/nunit-discuss">mailing list</a>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-28T00:00:00+02:00" pubdate data-updated="true">Oct 28<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&#8217;ve been a frequent user of LINQPad for several years now for I enjoy the simplicity with which you can fire it up, start writing code and see the results immediately. I appreciate that other programming languages provide REPLs for you to try and even modify the currently running application, and I enjoy them when I have a chance to work with node.js or Ruby, but this is not something that people writing C# code are used to, and in any case outside the scope of this post.</p>
+<p>Recently my involvement with NUnit has increased to some extent and on several occasions I found myself needing to try running one-off tests and quickly see their outcome in order to validate bug reports or in general for experimenting. <br />As you can guess this would usually require launching a full-featured IDE like Visual Studio, create a class library project, reference NUnit, build and run some NUnit runner against the resulting assembly. That&#8217;s a lot of work for just getting a few lines of code to run.</p>
+<p>The idea was therefore to be able to run NUnit tests on LINQPad, which is definitely possible and quite simple, as it turns out.</p>
+<p>Now, a bit of background about NUnit is in order. The current release, which at the time of this writing is 2.6.2 and has been available for a few days, along with the whole 2.x series, has always kept the framework and the core separate.</p>
+<p>The framework is contained in the <em>nunit.framework.dll</em> assembly, which client code usually references in order to write tests. Just to mention a few it contains the TestAttribute and the Assert classes, which everyone writing unit tests should be familiar with.<br />The core, on the other hand, contains the code needed to run the tests, which includes test discovery, filtering, the logic for handling application domains and processes, and finally exposes this functionality by means of test runners. NUnit currently ships with a console and a graphical GUI runner.<br />This net separation of the core from the framework basically means that running tests in LINQPad via NUnit requires referencing both the core and the framework assemblies, and then invoking a runner pointing it at the current assembly. This is possible but also not the fastest and cleanest way to accomplish it.</p>
+<p>Enter NUnitLite. <strong>NUnitLite </strong>has been around for some time now and the main difference with NUnit v2 that is of some relevance here is that there is no distinction between the core and the framework. Everything is contained within a single assembly that you can reference from your tests, and the very same project containing the tests can be used to run them with a single one-liner.</p>
+<p>Although NUnitLite does not provide all of the features of NUnit it has quite enough of them for most needs, and above all simplifies our life a lot here.<br />On the other side, we&#8217;re going to leverage a new feature available in LINQPad, the ability to reference NuGet packages, which right now is provided in the beta version downloadable from <a href="http://www.linqpad.net/beta.aspx" title="LINQPad Beta">here</a>.&nbsp;</p>
+<p>Now that the ground is set here are the steps to get started writing unit tests in LINQPad:</p>
+<ol>
+<li>Create a new query and set its Language to C# Program, which will create a stub main method</li>
+<li>Add the NUnitLite NuGet package, which is easily done by hitting F4, then Add NuGet&#8230; and then looking up and selecting NUnitLite. Also add the namespaces NUnit.Framework and NUnitLite.Runner</li>
+<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><script src="https://gist.github.com/3970719.js"></script></li>
+<li>Hit F5 and see the results of the test run</li>
+</ol>
+<p>The steps outlined above are quick and simple, but still require some time if you have to do it over and over, therefore a better option would be to save the raw template as a LINQPad query somewhere on your file system, or even better, although this chance is limited to the owners of a professional license, using a snippet which is available for download from the NUnit wiki <a href="http://www.nunit.org/wiki/doku.php?id=extras:nunit_via_linqpad" title="NUnit Wiki">here</a>.</p>
+<p>The snippet takes care of the whole plumbing so you just need to download and copy it to the snippets folder, usually in <em>%userprofile%\Documents\LINQPad Snippets</em>, then just type the snippet shortcut,&nbsp;<strong>nunit</strong>, in any query window and you&#8217;re ready to write your tests.</p>
+<ol> </ol>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, Present and Future of .NET Assembly Merging</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-21T00:00:00+01:00" pubdate data-updated="true">Nov 21<span>st</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies contain mainly Microsoft Intermediate Language (MSIL) code which is then jitted upon execution.</p>
+<p>It&#8217;s not uncommon for libraries which expose public APIs to rely internally on assemblies provided by third parties that should not end up in the final package. I&#8217;ll take the mocking library NSubstitute as an example.</p>
+<p>There are commonly a couple of reasons why they shouldn&#8217;t.&nbsp;First, the client code does not need to reference them directly as they are only used internally. Back to the mocking framework example, it wouldn&#8217;t make a lot of sense to build a dynamic proxy from scratch as there exist excellent implementations already, like Castle DynamicProxy, which NSubstitute uses.<br />The other reason is to avoid cluttering the release package of the library with dependencies that are of no interest to the end user, thus simplifying the distribution of the library which would then consist of a smaller number of files.</p>
+<p>The aim is thus to&nbsp;embed&nbsp;somehow the dependent assemblies in a single assembly. There has been mainly a single approach to this so far, and it&#8217;s called ILMerge.</p>
+<h3>ILMerge</h3>
+<p><a href="http://research.microsoft.com/en-us/people/mbarnett/ilmerge.aspx">Mike Barnett&#8217;s ILMerge</a> is a free tool which statically links several assemblies into a single output assembly. It runs as a console application and rewrites the IL of the main assembly by embedding the contents of the other assemblies into it. It takes care of a couple of additional things, like strong naming and target framework version, but accepts additional configuration options which allow further customization. One particularly useful is <em>internalization</em> of types, which allows to change the accessibility levels of the types contained in the dependent assemblies, thus effectively hiding them to everyone except the containing assembly.</p>
+<p>One thing to be aware of is that embedding types belonging to one assembly into another assembly makes the first lose its original identity. This can represent either a pro or a con depending on the use case. Serialization and security may not work correctly, as they usually make some use of metadata related to the assembly, which now no longer exists, but also opens up interesting scenarios.</p>
+<p>NSubstitute <em>ILMerges</em>&nbsp;the Castle.Core.dll assembly, which contains the DynamicProxy part. If you were to use NSubstitute in a project where you needed to make use of DynamicProxy directly you would be safe, and could use whatever version of the library you liked, as the runtime would consider the types as belonging to different assemblies and thus not conflicting in any way. The only issue you could encounter is of conflicting namespaces if the assembly wasn&#8217;t merged with its types internalized. Public types would in fact still be visible and you would need to specify some alias to avoid ambiguous references.</p>
+<p>If on the other hand NSubstitute didn&#8217;t merge Castle.Core.dll and distributed it alongside NSubstitute.dll, then you would be somewhat tied to use the version distributed with NSubstitute. Loading different versions of the same assembly in one AppDomain is in fact <a href="http://msdn.microsoft.com/en-us/library/dd153782.aspx#avoid_loading_multiple_versions">discouraged</a> as it can generate all sort of weird behaviors. Also it wouldn&#8217;t be very easy to load two versions of the same assembly because unless the assemblies resided in the GAC you would have to find a way to keep them both on the file system, and assuming you usually load assemblies from the same folder you couldn&#8217;t let two files with the same name stay in the same folder. In this case the version of the assembly ending up in the output folder would depend on the build process, according to the order it chose to resolve dependencies during compilation.</p>
+<p>Another recent and blocking shortcoming of ILMerge has to do with WPF assemblies. These assemblies contain embedded resources which in turn encode the identities of the original containing assembly. As I said merged assemblies loose their identities, therefore these resources would no longer behave correctly. ILMerge would thereby need to extract the resources, patch the encoded assembly identities replacing them with the target assembly identity and re-encode them, something which it is not capable of doing as of now.</p>
+<p>And that&#8217;s from embedded resources that comes another solution.</p>
+<h3>Embedding assemblies as resources</h3>
+<p>Serializing other files into assemblies as resources has always been possible. Resources can then be deserialized at runtime and manipulated. They can be anything, although commonly used for storing media, icons and inanimate data in general. Nothing prevents you from storing assemblies in there, and load them at runtime. This approach has been described thoroughly by Jeffrey Richter in his excellent CLR via C# book, whose relevant excerpt is available <a href="http://blogs.msdn.com/b/microsoft_press/archive/2010/02/03/jeffrey-richter-excerpt-2-from-clr-via-c-third-edition.aspx">here</a>.</p>
+<p>The approach is simple, so simple that ILMerge creator commented:</p>
+<blockquote class="posterous_short_quote">As the author of ILMerge, I think this is fantastic! If I had known about this, I never would have written ILMerge.</blockquote>
+<p>The trick to make it work is to subscribe to the AppDomain&#8217;s AssemblyResolve event. This event is fired when the runtime is unable to locate a referenced assembly, and as a last chance gives the application developer a chance to pick it up according to custom logic. The logic here is to load the assembly from the resources and load it into the application domain.<br />One caveat is that the AssemblyResolve event needs to be subscribed to before any code requiring the embedded assemblies is ever run, which is not always possible. One such case is a .dll, which has not explicit entry point.</p>
+<p>To work around that you have to rely on a feature of the .NET framework which is not exposed to the programming languages directly, called <a href="http://blogs.msdn.com/b/junfeng/archive/2005/11/19/494914.aspx">module initializers</a>. Think of type initializers (aka static constructors), just for modules. In the same way as type initializers are guaranteed to be called before any members in a type are accessed, modules initializers extend this guarantee to the types with an module (assemblies usually contain a single module).</p>
+<p>Placing the AssemblyResolve subscription instructions in a module initializer is thereby either the safest or unique option to inject custom assembly resolution logic, but requires IL manipulation.</p>
+<h3>Costura</h3>
+<p><a href="http://code.google.com/p/costura/">Costura</a> is a neat open source project developed by Simon Cropp which takes care of all the steps described above, and is thereby the suggested way to merge third party assemblies using the embedded resource approach.</p>
+<p>It does so by embedding all referenced assemblies marked as <em>copy local</em> (thus excluding assemblies living in the GAC, for instance) into the main assembly, and then injecting the module initializer code which subscribes to the AppDomain&#8217;s AssemblyResolve event and looks up unresolved assemblies from the embedded resources.</p>
+<p>Costura only requires you to call its custom MSBuild task in the AfterBuild target of the main assembly project.</p>
+<p><script src="https://gist.github.com/1383044.js"></script></p>
+<p>This approach however comes with its drawbacks too. Most notably it prevents multiple version of the same assembly to be loaded, as in this case the assemblies maintain their identity. This can be dangerous because it could lead to non-determinism in which version of one assembly is loaded. For example, if you distributed a library using this approach and the library client was referencing directly an assembly with the same identity as one of those embedded in your library, which assembly gets loaded in the application domain would depend on the order in which the client code uses your library. If your library is loaded in memory first, then its version of the third party assembly would be loaded in memory, in the other case the client code version of the library would be loaded instead, leading to a fully working application in the best case and to a runtime exception in the worst.</p>
+<p>Both approaches have their pros and cons, but it&#8217;s useful to realize that both exist and know when to apply each.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/19/speaking-s-overrated/">Speaking&#8217;s Overrated</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-19T00:00:00+01:00" pubdate data-updated="true">Nov 19<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div style="margin: 8px;">
+<p>Today is the&nbsp;<a href="http://agileday.it">Italian Agile Day</a>, happening in Rome.</p>
+<p>I didn&#8217;t attend mostly because past editions haven&#8217;t been very interesting, with a few exceptions, and I&#8217;ve been following some sessions on the live streaming site from home.</p>
+<p>It happens quite rarely that I hear anything really interesting being said at these meetings, but I can live with that, there&#8217;s usually not enough time to delve into a topic deep enough to provide any valuable understanding. More often, there is barely time to instigate curiosity so that people can further research when they go back home. This is perfectly healthy, and what I try to do when I speak myself.</p>
+<p>Sadly what I see happening most of the times are speakers talking for hours without really saying anything except trying to sound convincing. I&#8217;ve experienced this so many times now that I&#8217;m starting to think that it is probably intentional attitude rather than a side effect due to lack of skill or anything else.&nbsp;<br />When I was younger I would look at these talks in wonder, asking myself when I would have been able to speak in the same way about complex topics that at the time I just could not understand. Now that I&#8217;ve somewhat grown up professionaly I can look at things a bit differently and judge with more awareness what is going on, and it pisses me off.&nbsp;<br />It does mostly because when you speak to people you have some responsibility towards your listeners, and they don&#8217;t expect you to deceive them or may not even be able to realize that it&#8217;s what you&#8217;re doing. There are other reasons, however.</p>
+<p><strong>Out of context - deliberate omission</strong></p>
+<p>You have probably heard someone saying that&nbsp;<em>context is king</em>. It indeed is. Many people tend to make absolute statements way too often, and to avoid the effort of figuring out whether there may be any truth in what they&#8217;re saying my current strategy is to simply assume that they are wrong.</p>
+<blockquote>
+<p style="text-align: left;"><em>Frameworks are a smell</em></p>
+</blockquote>
+<blockquote>
+<p style="text-align: left;"><em>QA is useless</em></p>
+</blockquote>
+<p>These are just some examples of things I&#8217;ve heard presenters say in the recent past. Now I consider myself as being on neither side of the spectrum when it comes to these topics, because as usual&nbsp;<em>context is king</em>. How can you say that using an ORM is always wrong and slows you down? There are compromises that you need to be ready to accept, but aren&#8217;t always there?</p>
+<p>Another variation of taking things out of context is when something is deliberately omitted. It is way too easy to support your thesis when you intentionally omit arguments that go against it. It&#8217;s not easy to realize omissions unless you know a topic very well, or you&#8217;re directly involved in the omission, like I had to hear right today about proposing (I proposed it) a supposedly terribly bad TDD video course to be watched by development teams in the company.</p>
+<p><strong>Knowledge flaunt</strong></p>
+<p>As I said it&#8217;s usually hard to delve into a topic enough during a time constrained speech. Nonetheless, it should not be an excuse to pretend you know much more about the topic than you actually do.<br />Once again it&#8217;s hard to judge whether someone is really an expert or is pretending to be one, and the most effective way is to know the person yourself. The most annoying attitude is when the speaker is presenting at the most of his knowledge while pretending that he&#8217;s talking about the easy things, and there&#8217;s much more to it that you&#8217;re not entitled to know just yet.</p>
+<p>This happened very recently to me, with a person I know presenting&nbsp;<em>the easy things</em>&nbsp;about a topic and laughing annoyed at most people not getting it right. Just a week before me and him talking about the very same topic in a slightly more advanced manner caught him off guard, with me thinking whether he really knew anything about it.</p>
+<p><strong>Fluff</strong></p>
+<p>Lots of presenters finally just speak of fluff. In Italian it translates nicely to&nbsp;<em>fuffa</em>. This is probably the easier to figure out when attending a presentation, because at the end you are left thinking whether anything of what you&#8217;ve heard really made any sense.&nbsp;<br />Someone built their entire career on this, and you usually see them proposing training and courses. These people are dangerous mostly because they are attractive to companies. I personally believe that these people are not even worth a penny.</p>
+<p><strong>Why speaking is overrated</strong></p>
+<p>There is much more to this than I&#8217;ve been able to explain in my first blog post after several years, but I hope I have given some valid arguments.</p>
+<p>I am under the impression that pretty much everything that you can hear talking about is overrated, as people have to make a living out of it.</p>
+</div>
+<p>&nbsp;</p>
+</div>
+  
+  
+
+
+    </article>
   
   <div class="pagination">
     
@@ -77,6 +397,22 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/01/19/async-support-in-nunit/">Async support in NUnit</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, present and future of .NET assembly merging</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/19/speaking-s-overrated/">Speaking&#8217;s overrated</a>
+      </li>
     
   </ul>
 </section>
