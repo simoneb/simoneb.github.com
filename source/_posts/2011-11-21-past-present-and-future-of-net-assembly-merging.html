@@ -2,6 +2,7 @@
 layout: post
 title: Past, present and future of .NET assembly merging
 published: true
+comments: true
 ---
 <p>Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies contain mainly Microsoft Intermediate Language (MSIL) code which is then jitted upon execution.</p>
 <p>It's not uncommon for libraries which expose public APIs to rely internally on assemblies provided by third parties that should not end up in the final package. I'll take the mocking library NSubstitute as an example.</p>
