@@ -109,7 +109,24 @@
 
 <p>This post is not much about the feature itself as plenty of information is available online, but rather the support that was introduced for it in NUnit. Here is a simple NUnit test:</p>
 
-<p><script src="https://gist.github.com/4575577.js"></script></p>
+<p><figure class='code'><figcaption><span>A simple test # (nunit-simple-test.cs)</span> <a href='/downloads/code/nunit-simple-test.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+</span><span class='line'><span class="n">public</span> <span class="kt">void</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>So far so good, but let&rsquo;s assume that invoking that method on the 8 ball is really expensive in terms of execution time and you would like your production code invoking it to not just sit and wait until it completes.
 That&rsquo;s where the async feature fits, and you could change the method to be an async, Task-returning one instead. How to make <em>that specific</em> method asynchronous is definitely out of scope here though.</p>
@@ -118,7 +135,28 @@ That&rsquo;s where the async feature fits, and you could change the method to be
 
 <p>In order to call the new method asynchronously the test code would need to be adapted as shown here:</p>
 
-<p><script src="https://gist.github.com/4575669.js"></script></p>
+<p><figure class='code'><figcaption><span>A simple async test # (nunit-simple-async-test.cs)</span> <a href='/downloads/code/nunit-simple-async-test.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="kt">void</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// why am I still here?</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>Awaiting the result of the method implies that the test method has to be marked as async, too.
 Now, assuming that you&rsquo;re not planning to change job you would really expect the test to fail, which it instead doesn&rsquo;t if run with a version of NUnit older than 2.6.2.</p>
@@ -130,7 +168,26 @@ This is no longer the case with asynchronous methods, as we just found out, beca
 
 <p>Without any support from NUnit there was a simple fix available already, which was to <em>Wait</em> on the <em>Task</em> returned by the asynchronous method rather than <em>await</em> it.</p>
 
-<p><script src="https://gist.github.com/4575750.js"></script></p>
+<p><figure class='code'><figcaption><span>A simple test - workaround for async # (nunit-simple-test-workaround.cs)</span> <a href='/downloads/code/nunit-simple-test-workaround.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+</span><span class='line'><span class="n">public</span> <span class="kt">void</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">Task</span><span class="o">&lt;</span><span class="n">bool</span><span class="o">&gt;</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">answer</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">.</span><span class="n">Result</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>This would work perfectly, although it&rsquo;s not as nice as being able to write the test code in the same way you would write the production code, that is, by using the await keyword. This has the additional disadvantage of exception handling behaving differently between await and Wait. When using await the code looks like everything is happening sequentially, and you can catch exceptions in the same way you do with sequential code. If <em>ShouldIChangeJob</em> threw an exception of the fictitious type <em>TimeoutException</em> you would see exactly that exception bubbling up from your code. When using Wait instead a <em>System.AggregateException</em> would bubble up, which is a sort of container for multiple exceptions which might have happened during an asynchronous operation, and would wrap the real <em>TimeoutException</em>. This of course makes await more intuitive and preferable over Wait.</p>
 
@@ -172,7 +229,24 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 
 <p>Now, although it seems quite reasonable to write the above asynchronous test as one returning void it is equally valid to write it so that it returns a Task instead.</p>
 
-<p><script src="https://gist.github.com/4575918.js"></script></p>
+<p><figure class='code'><figcaption><span>A simple async test returning Task # (nunit-simple-async-task-test.cs)</span> <a href='/downloads/code/nunit-simple-async-task-test.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">var</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>It is actually more advisable to do so if you are especially interested about forwards compatibility of your code for the reasons explained above. If you do this NUnit will not have to jump through hoops to run it correctly and will simply fall back to waiting on the returned task.</p>
 
@@ -186,13 +260,59 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 
 <p>Methods marked with TestCaseAttribute can return values, which are then checked against the Result property of the test case. They now support returning result asynchronously:</p>
 
-<p><script src="https://gist.github.com/4577982.js"></script></p>
+<p><figure class='code'><figcaption><span>An async test case returning Task&lt;int&gt; # (nunit-async-testcase.cs)</span> <a href='/downloads/code/nunit-async-testcase.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">TestCase</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Result</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)]</span>
+</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">TestAddAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">await</span> <span class="n">SumAsync</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>	
+</span><span class='line'>
+</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">SumAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>	<span class="k">return</span> <span class="n">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="n">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <h4>Async lambdas</h4>
 
 <p>The async support went slightly beyond test methods, and extended to framework features which accept lambda expression as their arguments:</p>
 
-<p><script src="https://gist.github.com/4578097.js"></script></p>
+<p><figure class='code'><figcaption><span>Async lambda support in NUnit framework # (async-lambda-support.cs)</span> <a href='/downloads/code/async-lambda-support.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span> <span class="n">AsyncLambaSupport</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="c1">// throwing asynchronously</span>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">await</span> <span class="n">ThrowAsync</span><span class="p">(),</span> <span class="n">Throws</span><span class="p">.</span><span class="n">TypeOf</span><span class="o">&lt;</span><span class="n">InvalidOperationException</span><span class="o">&gt;</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// returning values asynchronously</span>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">await</span> <span class="n">ReturnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// &quot;After&quot; works with async methods too</span>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">await</span> <span class="n">ResutnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">After</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>Framework support is not yet available in NUnit 2.6.2, it will be in the next build.</p>
 

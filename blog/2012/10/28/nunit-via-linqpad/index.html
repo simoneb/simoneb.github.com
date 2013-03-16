@@ -116,7 +116,30 @@
 <ol>
 <li>Create a new query and set its Language to C# Program, which will create a stub main method</li>
 <li>Add the NUnitLite NuGet package, which is easily done by hitting F4, then Add NuGet&#8230; and then looking up and selecting NUnitLite. Also add the namespaces NUnit.Framework and NUnitLite.Runner</li>
-<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><script src="https://gist.github.com/3970719.js"></script></li>
+<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><figure class='code'><figcaption><span>NUnitLite in LINQPad # (linqpad-nunitlite.cs)</span> <a href='/downloads/code/linqpad-nunitlite.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">Main</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">new</span> <span class="n">NUnitLite</span><span class="p">.</span><span class="n">Runner</span><span class="p">.</span><span class="n">TextUI</span><span class="p">().</span><span class="n">Execute</span><span class="p">(</span><span class="n">new</span><span class="p">[]{</span><span class="s">&quot;-noheader&quot;</span><span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Define other methods and classes here</span>
+</span><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+</span><span class='line'><span class="n">public</span> <span class="kt">void</span> <span class="n">SomeTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Assert</span><span class="p">.</span><span class="n">Pass</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></li>
 <li>Hit F5 and see the results of the test run</li>
 </ol>
 <p>The steps outlined above are quick and simple, but still require some time if you have to do it over and over, therefore a better option would be to save the raw template as a LINQPad query somewhere on your file system, or even better, although this chance is limited to the owners of a professional license, using a snippet which is available for download from the NUnit wiki <a href="http://www.nunit.org/wiki/doku.php?id=extras:nunit_via_linqpad" title="NUnit Wiki">here</a>.</p>

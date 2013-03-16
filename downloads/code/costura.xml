@@ -1,0 +1,7 @@
+<UsingTask 
+    TaskName="Costura.EmbedTask" 
+    AssemblyFile="$(SolutionDir)[path to]\Costura.dll" />
+
+<Target Name="AfterBuild"> 
+    <Costura.EmbedTask />
+</Target>
