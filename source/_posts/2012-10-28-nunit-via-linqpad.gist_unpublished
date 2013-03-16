@@ -1,7 +1,7 @@
 ---
 layout: post
 title: NUnit via LINQPad
-published: true
+published: false
 comments: true
 ---
 <p>I've been a frequent user of LINQPad for several years now for I enjoy the simplicity with which you can fire it up, start writing code and see the results immediately. I appreciate that other programming languages provide REPLs for you to try and even modify the currently running application, and I enjoy them when I have a chance to work with node.js or Ruby, but this is not something that people writing C# code are used to, and in any case outside the scope of this post.</p>
@@ -15,7 +15,7 @@ comments: true
 <ol>
 <li>Create a new query and set its Language to C# Program, which will create a stub main method</li>
 <li>Add the NUnitLite NuGet package, which is easily done by hitting F4, then Add NuGet... and then looking up and selecting NUnitLite. Also add the namespaces NUnit.Framework and NUnitLite.Runner</li>
-<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p />{% include_code NUnitLite in LINQPad lang:csharp linqpad-nunitlite.cs %}</li>
+<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><script src="https://gist.github.com/3970719.js"></script></li>
 <li>Hit F5 and see the results of the test run</li>
 </ol>
 <p>The steps outlined above are quick and simple, but still require some time if you have to do it over and over, therefore a better option would be to save the raw template as a LINQPad query somewhere on your file system, or even better, although this chance is limited to the owners of a professional license, using a snippet which is available for download from the NUnit wiki <a href="http://www.nunit.org/wiki/doku.php?id=extras:nunit_via_linqpad" title="NUnit Wiki">here</a>.</p>

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Past, present and future of .NET assembly merging
-published: true
+published: false
 comments: true
 ---
 <p>Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies contain mainly Microsoft Intermediate Language (MSIL) code which is then jitted upon execution.</p>
@@ -26,6 +26,6 @@ comments: true
 <p><a href="http://code.google.com/p/costura/">Costura</a> is a neat open source project developed by Simon Cropp which takes care of all the steps described above, and is thereby the suggested way to merge third party assemblies using the embedded resource approach.</p>
 <p>It does so by embedding all referenced assemblies marked as <em>copy local</em> (thus excluding assemblies living in the GAC, for instance) into the main assembly, and then injecting the module initializer code which subscribes to the AppDomain's AssemblyResolve event and looks up unresolved assemblies from the embedded resources.</p>
 <p>Costura only requires you to call its custom MSBuild task in the AfterBuild target of the main assembly project.</p>
-<p>{% include_code Costura task lang:xml costura.xml %}</p>
+<p><script src="https://gist.github.com/1383044.js"></script></p>
 <p>This approach however comes with its drawbacks too. Most notably it prevents multiple version of the same assembly to be loaded, as in this case the assemblies maintain their identity. This can be dangerous because it could lead to non-determinism in which version of one assembly is loaded. For example, if you distributed a library using this approach and the library client was referencing directly an assembly with the same identity as one of those embedded in your library, which assembly gets loaded in the application domain would depend on the order in which the client code uses your library. If your library is loaded in memory first, then its version of the third party assembly would be loaded in memory, in the other case the client code version of the library would be loaded instead, leading to a fully working application in the best case and to a runtime exception in the worst.</p>
 <p>Both approaches have their pros and cons, but it's useful to realize that both exist and know when to apply each.</p>
