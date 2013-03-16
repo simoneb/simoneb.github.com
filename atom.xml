@@ -4,7 +4,7 @@
   <title><![CDATA[simoneb's blog]]></title>
   <link href="http://simoneb.github.com/atom.xml" rel="self"/>
   <link href="http://simoneb.github.com/"/>
-  <updated>2013-03-16T23:38:49+01:00</updated>
+  <updated>2013-03-16T23:47:24+01:00</updated>
   <id>http://simoneb.github.com/</id>
   <author>
     <name><![CDATA[Simone Busoli]]></name>
@@ -22,7 +22,7 @@
 
 <p>This post is not much about the feature itself as plenty of information is available online, but rather the support that was introduced for it in NUnit. Here is a simple NUnit test:</p>
 
-<p><figure class='code'><figcaption><span>A simple test # (nunit-simple-test.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-test.cs'>download</a></figcaption>
+<p><figure class='code'><figcaption><span>A simple test  (nunit-simple-test.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-test.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -31,11 +31,11 @@
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
-</span><span class='line'><span class="n">public</span> <span class="kt">void</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">answer</span> <span class="p">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
@@ -48,7 +48,7 @@ That&rsquo;s where the async feature fits, and you could change the method to be
 
 <p>In order to call the new method asynchronously the test code would need to be adapted as shown here:</p>
 
-<p><figure class='code'><figcaption><span>A simple async test # (nunit-simple-async-test.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-async-test.cs'>download</a></figcaption>
+<p><figure class='code'><figcaption><span>A simple async test  (nunit-simple-async-test.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-async-test.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -59,11 +59,11 @@ That&rsquo;s where the async feature fits, and you could change the method to be
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
-</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="kt">void</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">answer</span> <span class="p">=</span> <span class="k">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
 </span><span class='line'>
@@ -81,7 +81,7 @@ This is no longer the case with asynchronous methods, as we just found out, beca
 
 <p>Without any support from NUnit there was a simple fix available already, which was to <em>Wait</em> on the <em>Task</em> returned by the asynchronous method rather than <em>await</em> it.</p>
 
-<p><figure class='code'><figcaption><span>A simple test - workaround for async # (nunit-simple-test-workaround.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-test-workaround.cs'>download</a></figcaption>
+<p><figure class='code'><figcaption><span>A simple test - workaround for async  (nunit-simple-test-workaround.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-test-workaround.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -91,11 +91,11 @@ This is no longer the case with asynchronous methods, as we just found out, beca
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
-</span><span class='line'><span class="n">public</span> <span class="kt">void</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">Task</span><span class="o">&lt;</span><span class="n">bool</span><span class="o">&gt;</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">Task</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;</span> <span class="n">answer</span> <span class="p">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
 </span><span class='line'>    <span class="n">answer</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">.</span><span class="n">Result</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
@@ -142,7 +142,7 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 
 <p>Now, although it seems quite reasonable to write the above asynchronous test as one returning void it is equally valid to write it so that it returns a Task instead.</p>
 
-<p><figure class='code'><figcaption><span>A simple async test returning Task # (nunit-simple-async-task-test.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-async-task-test.cs'>download</a></figcaption>
+<p><figure class='code'><figcaption><span>A simple async test returning Task  (nunit-simple-async-task-test.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-simple-async-task-test.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -151,11 +151,11 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
-</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span> <span class="n">OneSimpleTest</span><span class="p">()</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">eightBall</span> <span class="o">=</span> <span class="n">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">var</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">answer</span> <span class="p">=</span> <span class="k">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
@@ -173,7 +173,7 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 
 <p>Methods marked with TestCaseAttribute can return values, which are then checked against the Result property of the test case. They now support returning result asynchronously:</p>
 
-<p><figure class='code'><figcaption><span>An async test case returning Task&lt;int&gt; # (nunit-async-testcase.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-async-testcase.cs'>download</a></figcaption>
+<p><figure class='code'><figcaption><span>An async test case returning Task&lt;int&gt;  (nunit-async-testcase.cs)</span> <a href='http://simoneb.github.com/downloads/code/nunit-async-testcase.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -184,15 +184,15 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">TestCase</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Result</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)]</span>
-</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">TestAddAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[TestCase(1, 2, Result = 3)]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">TestAddAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">await</span> <span class="n">SumAsync</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">await</span> <span class="nf">SumAsync</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>	
 </span><span class='line'>
-</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">SumAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">SumAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>	<span class="k">return</span> <span class="n">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="n">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+</span><span class='line'>	<span class="k">return</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="p">+</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></p>
 
@@ -200,7 +200,7 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 
 <p>The async support went slightly beyond test methods, and extended to framework features which accept lambda expression as their arguments:</p>
 
-<p><figure class='code'><figcaption><span>Async lambda support in NUnit framework # (async-lambda-support.cs)</span> <a href='http://simoneb.github.com/downloads/code/async-lambda-support.cs'>download</a></figcaption>
+<p><figure class='code'><figcaption><span>Async lambda support in NUnit framework  (async-lambda-support.cs)</span> <a href='http://simoneb.github.com/downloads/code/async-lambda-support.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -213,17 +213,17 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
-</span><span class='line'><span class="n">public</span> <span class="n">async</span> <span class="n">Task</span> <span class="n">AsyncLambaSupport</span><span class="p">()</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">AsyncLambaSupport</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
 </span><span class='line'>    <span class="c1">// throwing asynchronously</span>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">await</span> <span class="n">ThrowAsync</span><span class="p">(),</span> <span class="n">Throws</span><span class="p">.</span><span class="n">TypeOf</span><span class="o">&lt;</span><span class="n">InvalidOperationException</span><span class="o">&gt;</span><span class="p">());</span>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">await</span> <span class="n">ThrowAsync</span><span class="p">(),</span> <span class="n">Throws</span><span class="p">.</span><span class="n">TypeOf</span><span class="p">&lt;</span><span class="n">InvalidOperationException</span><span class="p">&gt;());</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="c1">// returning values asynchronously</span>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">await</span> <span class="n">ReturnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">await</span> <span class="n">ReturnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="m">1</span><span class="p">));</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="c1">// &quot;After&quot; works with async methods too</span>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">await</span> <span class="n">ResutnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">After</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">await</span> <span class="n">ResutnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">After</span><span class="p">(</span><span class="m">100</span><span class="p">));</span>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></p>
 
@@ -257,7 +257,7 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 <ol>
 <li>Create a new query and set its Language to C# Program, which will create a stub main method</li>
 <li>Add the NUnitLite NuGet package, which is easily done by hitting F4, then Add NuGet&#8230; and then looking up and selecting NUnitLite. Also add the namespaces NUnit.Framework and NUnitLite.Runner</li>
-<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><figure class='code'><figcaption><span>NUnitLite in LINQPad # (linqpad-nunitlite.cs)</span> <a href='http://simoneb.github.com/downloads/code/linqpad-nunitlite.cs'>download</a></figcaption>
+<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><figure class='code'><figcaption><span>NUnitLite in LINQPad  (linqpad-nunitlite.cs)</span> <a href='http://simoneb.github.com/downloads/code/linqpad-nunitlite.cs'>download</a></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -269,14 +269,14 @@ What does it mean exactly? Well, it means that there is no Task on which to call
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">Main</span><span class="p">()</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="n">new</span> <span class="n">NUnitLite</span><span class="p">.</span><span class="n">Runner</span><span class="p">.</span><span class="n">TextUI</span><span class="p">().</span><span class="n">Execute</span><span class="p">(</span><span class="n">new</span><span class="p">[]{</span><span class="s">&quot;-noheader&quot;</span><span class="p">});</span>
+</span><span class='line'>  <span class="k">new</span> <span class="n">NUnitLite</span><span class="p">.</span><span class="n">Runner</span><span class="p">.</span><span class="n">TextUI</span><span class="p">().</span><span class="n">Execute</span><span class="p">(</span><span class="k">new</span><span class="p">[]{</span><span class="s">&quot;-noheader&quot;</span><span class="p">});</span>
 </span><span class='line'><span class="p">}</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1">// Define other methods and classes here</span>
-</span><span class='line'><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
-</span><span class='line'><span class="n">public</span> <span class="kt">void</span> <span class="n">SomeTest</span><span class="p">()</span>
+</span><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">SomeTest</span><span class="p">()</span>
 </span><span class='line'><span class="p">{</span>
 </span><span class='line'>  <span class="n">Assert</span><span class="p">.</span><span class="n">Pass</span><span class="p">();</span>
 </span><span class='line'><span class="p">}</span>
