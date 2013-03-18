@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Past, present and future of .NET assembly merging - simoneb's blog</title>
+  <title>simoneb's blog</title>
   <meta name="author" content="Simone Busoli">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://simoneb.github.com/blog/2011/11/21/past-present-and-future-of-net-assembly-merging">
+  <link rel="canonical" href="http://simoneb.github.com/blog/page/2">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="http://feeds.feedburner.com/simoneb" rel="alternate" title="simoneb's blog" type="application/atom+xml">
@@ -77,12 +77,15 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
   
+  
+  
+    <article>
+      
   <header>
     
-      <h1 class="entry-title">Past, Present and Future of .NET Assembly Merging</h1>
+      <h1 class="entry-title"><a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, Present and Future of .NET Assembly Merging</a></h1>
     
     
       <p class="meta">
@@ -105,7 +108,7 @@
   </header>
 
 
-<div class="entry-content"><p>Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies contain mainly Microsoft Intermediate Language (MSIL) code which is then jitted upon execution.</p>
+  <div class="entry-content"><p>Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies contain mainly Microsoft Intermediate Language (MSIL) code which is then jitted upon execution.</p>
 <p>It&#8217;s not uncommon for libraries which expose public APIs to rely internally on assemblies provided by third parties that should not end up in the final package. I&#8217;ll take the mocking library NSubstitute as an example.</p>
 <p>There are commonly a couple of reasons why they shouldn&#8217;t.&nbsp;First, the client code does not need to reference them directly as they are only used internally. Back to the mocking framework example, it wouldn&#8217;t make a lot of sense to build a dynamic proxy from scratch as there exist excellent implementations already, like Castle DynamicProxy, which NSubstitute uses.<br />The other reason is to avoid cluttering the release package of the library with dependencies that are of no interest to the end user, thus simplifying the distribution of the library which would then consist of a smaller number of files.</p>
 <p>The aim is thus to&nbsp;embed&nbsp;somehow the dependent assemblies in a single assembly. There has been mainly a single approach to this so far, and it&#8217;s called ILMerge.</p>
@@ -146,61 +149,80 @@
 <p>This approach however comes with its drawbacks too. Most notably it prevents multiple version of the same assembly to be loaded, as in this case the assemblies maintain their identity. This can be dangerous because it could lead to non-determinism in which version of one assembly is loaded. For example, if you distributed a library using this approach and the library client was referencing directly an assembly with the same identity as one of those embedded in your library, which assembly gets loaded in the application domain would depend on the order in which the client code uses your library. If your library is loaded in memory first, then its version of the third party assembly would be loaded in memory, in the other case the client code version of the library would be loaded instead, leading to a fully working application in the best case and to a runtime exception in the worst.</p>
 <p>Both approaches have their pros and cons, but it&#8217;s useful to realize that both exist and know when to apply each.</p>
 </div>
-
-
-  <footer>
-    <p class="meta">
-      
   
-
-<span class="byline author vcard">Posted by <span class="fn">Simone Busoli</span></span>
-
-      
-
-
-
-
-
-
-
-
   
 
 
-<time datetime="2011-11-21T00:00:00+01:00" pubdate data-updated="true">Nov 21<span>st</span>, 2011</time>
+    </article>
+  
+  
+    <article>
       
-
-
-    </p>
+  <header>
     
-      <div class="sharing">
-  
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://simoneb.github.com/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/" data-via="simonebu" data-counturl="http://simoneb.github.com/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/" >Tweet</a>
-  
-  
-  
-</div>
-
+      <h1 class="entry-title"><a href="/blog/2011/11/19/speaking-s-overrated/">Speaking&#8217;s Overrated</a></h1>
     
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2011/11/19/speaking-s-overrated/" title="Previous Post: Speaking's overrated">&laquo; Speaking's overrated</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2012/10/28/nunit-via-linqpad/" title="Next Post: NUnit via LINQPad">NUnit via LINQPad &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
+    
+      <p class="meta">
+        
 
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-19T00:00:00+01:00" pubdate data-updated="true">Nov 19<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div style="margin: 8px;">
+<p>Today is the&nbsp;<a href="http://agileday.it">Italian Agile Day</a>, happening in Rome.</p>
+<p>I didn&#8217;t attend mostly because past editions haven&#8217;t been very interesting, with a few exceptions, and I&#8217;ve been following some sessions on the live streaming site from home.</p>
+<p>It happens quite rarely that I hear anything really interesting being said at these meetings, but I can live with that, there&#8217;s usually not enough time to delve into a topic deep enough to provide any valuable understanding. More often, there is barely time to instigate curiosity so that people can further research when they go back home. This is perfectly healthy, and what I try to do when I speak myself.</p>
+<p>Sadly what I see happening most of the times are speakers talking for hours without really saying anything except trying to sound convincing. I&#8217;ve experienced this so many times now that I&#8217;m starting to think that it is probably intentional attitude rather than a side effect due to lack of skill or anything else.&nbsp;<br />When I was younger I would look at these talks in wonder, asking myself when I would have been able to speak in the same way about complex topics that at the time I just could not understand. Now that I&#8217;ve somewhat grown up professionaly I can look at things a bit differently and judge with more awareness what is going on, and it pisses me off.&nbsp;<br />It does mostly because when you speak to people you have some responsibility towards your listeners, and they don&#8217;t expect you to deceive them or may not even be able to realize that it&#8217;s what you&#8217;re doing. There are other reasons, however.</p>
+<p><strong>Out of context - deliberate omission</strong></p>
+<p>You have probably heard someone saying that&nbsp;<em>context is king</em>. It indeed is. Many people tend to make absolute statements way too often, and to avoid the effort of figuring out whether there may be any truth in what they&#8217;re saying my current strategy is to simply assume that they are wrong.</p>
+<blockquote>
+<p style="text-align: left;"><em>Frameworks are a smell</em></p>
+</blockquote>
+<blockquote>
+<p style="text-align: left;"><em>QA is useless</em></p>
+</blockquote>
+<p>These are just some examples of things I&#8217;ve heard presenters say in the recent past. Now I consider myself as being on neither side of the spectrum when it comes to these topics, because as usual&nbsp;<em>context is king</em>. How can you say that using an ORM is always wrong and slows you down? There are compromises that you need to be ready to accept, but aren&#8217;t always there?</p>
+<p>Another variation of taking things out of context is when something is deliberately omitted. It is way too easy to support your thesis when you intentionally omit arguments that go against it. It&#8217;s not easy to realize omissions unless you know a topic very well, or you&#8217;re directly involved in the omission, like I had to hear right today about proposing (I proposed it) a supposedly terribly bad TDD video course to be watched by development teams in the company.</p>
+<p><strong>Knowledge flaunt</strong></p>
+<p>As I said it&#8217;s usually hard to delve into a topic enough during a time constrained speech. Nonetheless, it should not be an excuse to pretend you know much more about the topic than you actually do.<br />Once again it&#8217;s hard to judge whether someone is really an expert or is pretending to be one, and the most effective way is to know the person yourself. The most annoying attitude is when the speaker is presenting at the most of his knowledge while pretending that he&#8217;s talking about the easy things, and there&#8217;s much more to it that you&#8217;re not entitled to know just yet.</p>
+<p>This happened very recently to me, with a person I know presenting&nbsp;<em>the easy things</em>&nbsp;about a topic and laughing annoyed at most people not getting it right. Just a week before me and him talking about the very same topic in a slightly more advanced manner caught him off guard, with me thinking whether he really knew anything about it.</p>
+<p><strong>Fluff</strong></p>
+<p>Lots of presenters finally just speak of fluff. In Italian it translates nicely to&nbsp;<em>fuffa</em>. This is probably the easier to figure out when attending a presentation, because at the end you are left thinking whether anything of what you&#8217;ve heard really made any sense.&nbsp;<br />Someone built their entire career on this, and you usually see them proposing training and courses. These people are dangerous mostly because they are attractive to companies. I personally believe that these people are not even worth a penny.</p>
+<p><strong>Why speaking is overrated</strong></p>
+<p>There is much more to this than I&#8217;ve been able to explain in my first blog post after several years, but I hope I have given some valid arguments.</p>
+<p>I am under the impression that pretty much everything that you can hear talking about is overrated, as people have to make a living out of it.</p>
+</div>
+<p>&nbsp;</p>
 </div>
-  </section>
+  
+  
 
+
+    </article>
+  
+  <div class="pagination">
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/">Newer &rarr;</a>
+    
+  </div>
 </div>
-
 <aside class="sidebar">
   
     <section>
@@ -241,7 +263,7 @@
       </li>
     
       <li class="post">
-        <a href="/blog/2011/11/19/speaking-s-overrated/">Speaking's overrated</a>
+        <a href="/blog/2011/11/19/speaking-s-overrated/">Speaking&#8217;s overrated</a>
       </li>
     
   </ul>
@@ -250,7 +272,7 @@
 <section>
   <h1>GitHub Repos</h1>
   <ul id="gh_repos">
-    <li class="loading">Status updating...</li>
+    <li class="loading">Status updating&#8230;</li>
   </ul>
   
   <a href="https://github.com/simoneb">@simoneb</a> on GitHub
@@ -283,7 +305,6 @@
   
 </aside>
 
-
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -298,10 +319,7 @@
       var disqus_shortname = 'simoneb';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://simoneb.github.com/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/';
-        var disqus_url = 'http://simoneb.github.com/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
