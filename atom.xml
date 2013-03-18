@@ -4,7 +4,7 @@
   <title><![CDATA[simoneb's blog]]></title>
   <link href="http://simoneb.github.com/atom.xml" rel="self"/>
   <link href="http://simoneb.github.com/"/>
-  <updated>2013-03-16T23:47:24+01:00</updated>
+  <updated>2013-03-18T03:02:08+01:00</updated>
   <id>http://simoneb.github.com/</id>
   <author>
     <name><![CDATA[Simone Busoli]]></name>
@@ -12,6 +12,315 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Labeling Trees - Introduction]]></title>
+    <link href="http://simoneb.github.com/blog/2013/03/17/labeling-trees-introduction/"/>
+    <updated>2013-03-17T00:00:00+01:00</updated>
+    <id>http://simoneb.github.com/blog/2013/03/17/labeling-trees-introduction</id>
+    <content type="html"><![CDATA[<p>A few years ago I came across a video interview on Channel 9 starring Brian Beckman on a topic which I had never heard of before. The interview is still available online (<a href="http://channel9.msdn.com/Shows/Going+Deep/Brian-Beckman-The-Zen-of-Expressing-State-The-State-Monad">part 1</a> and <a href="http://channel9.msdn.com/shows/Going+Deep/Brian-Beckman-The-Zen-of-Stateless-State-The-State-Monad-Part-2">part 2</a>) but you don&#8217;t need to watch it to follow me as I&#8217;ll start from the beginning and guide you gently through the whole topic.</p>
+
+<p>Although I then considered myself an already proficient in C# developer I was quite confused, I just couldn&#8217;t wrap my head around the crazy concept of passing state around <em>invisibly</em>, although it was done in my favorite language. The interview comes with full source code and an assignment containing 10 exercises, which I was quite disappointed I could not even tackle. The main topic of the interview is labeling a binary tree, and Brian showed how to do it in several ways, which we&#8217;ll see and try to understand before moving on to the exercises.</p>
+
+<p>Time has passed and I can finally go back to that interesting topic and hopefully help someone else out there. The topic, needless to say, is monads, and not even the simplest of the monads, the state monad. This post is the first of a series where I&#8217;ll introduce the concept and then go through the exercises, hopefully solving them correctly.</p>
+
+<p>Without further ado, here&#8217;s the class which will accompany us throughout the journey, during which it will undergo only minor changes: a binary tree in C#.</p>
+
+<figure class='code'><figcaption><span>A binary tree  (binary-tree.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/binary-tree.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="k">abstract</span> <span class="k">void</span> <span class="nf">Show</span><span class="p">(</span><span class="kt">int</span> <span class="n">indent</span> <span class="p">=</span> <span class="m">0</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">T</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="nf">Leaf</span><span class="p">(</span><span class="n">T</span> <span class="k">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Value</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Show</span><span class="p">(</span><span class="kt">int</span> <span class="n">indent</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="k">new</span> <span class="kt">string</span><span class="p">(</span><span class="sc">&#39; &#39;</span><span class="p">,</span> <span class="n">indent</span> <span class="p">*</span> <span class="m">2</span><span class="p">)</span> <span class="p">+</span> <span class="s">&quot;Leaf: &quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Value</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Branch</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Left</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Right</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="nf">Branch</span><span class="p">(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">left</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">right</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Left</span> <span class="p">=</span> <span class="n">left</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Right</span> <span class="p">=</span> <span class="n">right</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Show</span><span class="p">(</span><span class="kt">int</span> <span class="n">indent</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="k">new</span> <span class="kt">string</span><span class="p">(</span><span class="sc">&#39; &#39;</span><span class="p">,</span> <span class="n">indent</span> <span class="p">*</span> <span class="m">2</span><span class="p">)</span> <span class="p">+</span> <span class="s">&quot;Branch:&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">Left</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="n">indent</span> <span class="p">+</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">Right</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="n">indent</span> <span class="p">+</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see a tree can either be a leaf, containing a <code>Value</code>, or a branch, whose left and right sides will be other trees (and thus either branches or leaves). The entire class hierarchy is generic for no special purpose except that it will allow us to give a meaningful representation to the leaves via their <code>T Value</code> property. I&#8217;ve also included a <code>Show(int)</code> method to easily ask the tree to dump itself to the output stream. A couple of helper methods to create branches and leaves will also come useful:</p>
+
+<figure class='code'><figcaption><span>Helper methods to create trees  (helper-methods.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/helper-methods.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">T</span> <span class="k">value</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">value</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">branch</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">left</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">right</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="n">Branch</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now creating and displaying a tree of type <code>string</code> is straightforward:</p>
+
+<figure class='code'><figcaption><span>A simple tree  (a-simple-tree.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/a-simple-tree.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'>                                 <span class="c1">//  tree.Show() outputs:</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">branch</span><span class="p">(</span>               <span class="c1">//  Branch:</span>
+</span><span class='line'>            <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">),</span>          <span class="c1">//    Leaf: a</span>
+</span><span class='line'>            <span class="n">branch</span><span class="p">(</span>             <span class="c1">//    Branch:</span>
+</span><span class='line'>              <span class="n">branch</span><span class="p">(</span>           <span class="c1">//      Branch:</span>
+</span><span class='line'>                <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;b&quot;</span><span class="p">),</span>      <span class="c1">//        Leaf: b</span>
+</span><span class='line'>                <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;c&quot;</span><span class="p">)),</span>     <span class="c1">//        Leaf: c</span>
+</span><span class='line'>              <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;d&quot;</span><span class="p">)));</span>      <span class="c1">//      Leaf: d</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">tree</span><span class="p">.</span><span class="n">Show</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Manual labeling</h2>
+
+<p>First of all we need to know what labeling a tree means. In our case it means to navigate the tree and assign a integer label to every leaf. Tree navigation can usually be done in two ways, depth-first (<a href="http://en.wikipedia.org/wiki/Depth-first_search">DFS</a>) or breadth-first (<a href="http://en.wikipedia.org/wiki/Breadth-first_search">BFS</a>), we&#8217;ll use the former here. In order to store the label in the leaves we need to enrich its structure. We&#8217;ll do that by making the generic parameter of the tree a <code>Labeled&lt;T&gt;</code>, defined as follows.</p>
+
+<figure class='code'><figcaption><span>Label  (labeled-class.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/labeled-class.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">Label</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">T</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="nf">Labeled</span><span class="p">(</span><span class="kt">int</span> <span class="n">label</span><span class="p">,</span> <span class="n">T</span> <span class="k">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Label</span> <span class="p">=</span> <span class="n">label</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Value</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="kt">string</span> <span class="nf">ToString</span><span class="p">()</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="k">new</span> <span class="p">{</span> <span class="n">Label</span><span class="p">,</span> <span class="n">Value</span> <span class="p">}.</span><span class="n">ToString</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="kt">int</span> <span class="n">label</span><span class="p">,</span> <span class="n">T</span> <span class="k">value</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">label</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In practice, labeling a structure of type <code>Tree&lt;T&gt;</code> means transforming it into a <code>Tree&lt;Labeled&lt;T&gt;&gt;</code>. With this new knowledge labeling our tree manually is as simple as recreating the same tree structure and replacing the value of the leaves with a <code>Labeled&lt;string&gt;</code> instance, incrementing the value of the label manually every time we visit a leaf.<br/>
+The value, or <em>state</em>, of the current label at each point in time lives in our brains: we&#8217;ll have to remember the previous value and increment it every time we visit a leaf. Not a big deal as long as the tree is small.</p>
+
+<figure class='code'><figcaption><span>Manually labeled tree  (manually-labeled-tree.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/manually-labeled-tree.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'>                                                 <span class="c1">// labeledTree.Show() outputs:</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">labeledTree</span> <span class="p">=</span> <span class="n">branch</span><span class="p">(</span>                        <span class="c1">// Branch:</span>
+</span><span class='line'>                    <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="s">&quot;a&quot;</span><span class="p">)),</span>       <span class="c1">//   Leaf: { Label = 0, Value = a }</span>
+</span><span class='line'>                    <span class="n">branch</span><span class="p">(</span>                      <span class="c1">//   Branch:</span>
+</span><span class='line'>                      <span class="n">branch</span><span class="p">(</span>                    <span class="c1">//     Branch:</span>
+</span><span class='line'>                        <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="s">&quot;b&quot;</span><span class="p">)),</span>   <span class="c1">//       Leaf: { Label = 1, Value = b }</span>
+</span><span class='line'>                        <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="s">&quot;c&quot;</span><span class="p">))),</span>  <span class="c1">//       Leaf: { Label = 2, Value = c }</span>
+</span><span class='line'>                      <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="m">3</span><span class="p">,</span> <span class="s">&quot;d&quot;</span><span class="p">))));</span>   <span class="c1">//     Leaf: { Label = 3, Value = d }</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">labeledTree</span><span class="p">.</span><span class="n">Show</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Functional labeling</h2>
+
+<p>As you can see labeling a tree manually is not very useful, imagine to have a tree with more than a bunch branches and leaves, it becomes quickly inconvenient. What if we could label it programmatically? We indeed can, and we&#8217;ll have to come up with a function, which given our initial unlabeled <code>Tree&lt;T&gt;</code>, gives us back a <code>Tree&lt;Labeled&lt;T&gt;&gt;</code>.<br/>
+Let&#8217;s call <code>Tree&lt;Labeled&lt;T&gt;&gt; Label&lt;T&gt;(Tree&lt;T&gt;)</code> such a function.</p>
+
+<figure class='code'><figcaption><span>Label function  (label-function-empty.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/label-function-empty.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">Label</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="c1">// what to write here?</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One constraint that we want to have is that we don&#8217;t want to store the current label in shared memory and update it whenever we visit a leaf. We would like to do it in a purely functional way. This means that the state needs to be passed around explicitly, with a starting value of 0. This suggests that we&#8217;ll need an additional support function that will thread the state via its arguments and return the updated state via its return value.<br/>
+Given the structure of the data we&#8217;re handling this function will also most likely call itself recursively.</p>
+
+<figure class='code'><figcaption><span>Label and Label1 functions  (functional-label.cs)</span> <a href='http://simoneb.github.com/downloads/code/monads/functional-label.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">Label</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">Label1</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">tree</span><span class="p">).</span><span class="n">Item2</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;</span> <span class="n">Label1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="kt">int</span> <span class="n">label</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">tree</span> <span class="k">is</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">lf</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">label</span><span class="p">+</span><span class="m">1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">br</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Branch</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">left</span> <span class="p">=</span> <span class="n">Label1</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">br</span><span class="p">.</span><span class="n">Left</span><span class="p">);</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">right</span> <span class="p">=</span> <span class="n">Label1</span><span class="p">(</span><span class="n">left</span><span class="p">.</span><span class="n">Item1</span><span class="p">,</span> <span class="n">br</span><span class="p">.</span><span class="n">Right</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">right</span><span class="p">.</span><span class="n">Item1</span><span class="p">,</span> <span class="n">branch</span><span class="p">(</span><span class="n">left</span><span class="p">.</span><span class="n">Item2</span><span class="p">,</span> <span class="n">right</span><span class="p">.</span><span class="n">Item2</span><span class="p">));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Label1</code> accepts an integer value representing the current label and a tree to be labeled. Its return value is a tuple containing the new label value and the labeled tree.</p>
+
+<p>Let&#8217;s go through the code to see what it does exactly. You can see that it does two different things according to whether the tree to be labeled is a leaf or a branch.<br/>
+In the first case it labels the leaf with the current value of the label, bumps it and returns a tuple containing the new label value and a leaf labeled with the value of the label before bumping it.<br/>
+In the second case it first calls itself recursively to label the left branch of the tree, which returns again a tuple with the current label value and the labeled sub-tree. Then it does the same with the right branch by passing the just-returned label value as the current label value. Finally it returns a tuple containing the final state of the label and a newly constructed labeled branch containing the previously labeled left and right branches.<br/>
+You might notice that it is this way of recursing that enables the depth-first approach.</p>
+
+<p>Finally, <code>Label</code> calls <code>Label1</code> passing <code>0</code> as the initial state and returning only the second item in the tuple, which is the labeled tree.</p>
+
+<p>The interesting thing about this approach is that it does not rely on any shared state to do the labeling. The current value of the label is passed as a function argument and the new value is returned as part of the result, versus storing the label value in a variable accessible from the function and incremented every time.</p>
+
+<p>In the next post we&#8217;ll see how to make this state-passing less explicit, while still avoiding shared memory to store it.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Async support in NUnit]]></title>
