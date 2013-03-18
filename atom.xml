@@ -4,7 +4,7 @@
   <title><![CDATA[simoneb's blog]]></title>
   <link href="http://simoneb.github.com/atom.xml" rel="self"/>
   <link href="http://simoneb.github.com/"/>
-  <updated>2013-03-18T03:02:08+01:00</updated>
+  <updated>2013-03-18T03:04:25+01:00</updated>
   <id>http://simoneb.github.com/</id>
   <author>
     <name><![CDATA[Simone Busoli]]></name>
@@ -145,8 +145,8 @@
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'>                                 <span class="c1">//  tree.Show() outputs:</span>
-</span><span class='line'><span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">branch</span><span class="p">(</span>               <span class="c1">//  Branch:</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'>                                <span class="c1">//  tree.Show() outputs:</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">branch</span><span class="p">(</span>              <span class="c1">//  Branch:</span>
 </span><span class='line'>            <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">),</span>          <span class="c1">//    Leaf: a</span>
 </span><span class='line'>            <span class="n">branch</span><span class="p">(</span>             <span class="c1">//    Branch:</span>
 </span><span class='line'>              <span class="n">branch</span><span class="p">(</span>           <span class="c1">//      Branch:</span>

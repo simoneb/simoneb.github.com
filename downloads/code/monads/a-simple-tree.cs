@@ -1,5 +1,5 @@
-                                 //  tree.Show() outputs:
-var tree = branch(               //  Branch:
+                                //  tree.Show() outputs:
+var tree = branch(              //  Branch:
             leaf("a"),          //    Leaf: a
             branch(             //    Branch:
               branch(           //      Branch:
