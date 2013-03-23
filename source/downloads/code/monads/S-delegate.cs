@@ -1,1 +1,0 @@
-public delegate Tuple<int, T> S<T>(int label);
