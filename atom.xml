@@ -4,7 +4,7 @@
   <title><![CDATA[simoneb's blog]]></title>
   <link href="http://simoneb.github.com/atom.xml" rel="self"/>
   <link href="http://simoneb.github.com/"/>
-  <updated>2013-03-31T01:43:09+01:00</updated>
+  <updated>2013-03-31T01:46:51+01:00</updated>
   <id>http://simoneb.github.com/</id>
   <author>
     <name><![CDATA[Simone Busoli]]></name>
@@ -14,10 +14,10 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Labeling trees - Invisible state]]></title>
-    <link href="http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state/"/>
-    <updated>2013-03-22T01:16:00+01:00</updated>
-    <id>http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state</id>
+    <title type="html"><![CDATA[Labeling Trees - Invisible state]]></title>
+    <link href="http://simoneb.github.com/blog/2013/03/31/labeling-trees-invisible-state/"/>
+    <updated>2013-03-31T01:45:00+01:00</updated>
+    <id>http://simoneb.github.com/blog/2013/03/31/labeling-trees-invisible-state</id>
     <content type="html"><![CDATA[<p>This is the second post of a series about labeling trees. In the <a href="http://simoneb.github.com/blog/2013/03/17/labeling-trees-introduction">previous post</a> we saw how to mark leaves of a binary tree with integer, incrementing labels, first manually and then functionally without relying on mutable state. We achieved it by writing a recursive <code>Label1</code> function which threaded the value of the label, the <em>state</em>, via function arguments and return value, incrementing it every time it came across a leaf of the tree.</p>
 
 <p>Let&#8217;s review the signature of the <code>Label1</code> function and then move one step forward towards a different, less explicit way to pass the state around.</p>
