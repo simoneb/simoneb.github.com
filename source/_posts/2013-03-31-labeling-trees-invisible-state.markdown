@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Labeling trees - Invisible state"
-date: 2013-03-22 01:16
+title: "Labeling Trees - Invisible state"
+date: 2013-03-31 01:45
 comments: true
 categories: 
 tags: monads
@@ -19,7 +19,7 @@ As the signature clearly shows the state passing is visible both in the argument
 
 {% include_code Label1 leaf logic lang:csharp monads/label1-leaves.cs %}
 
-This simple two-liner mixes together two concerns: creating a labeled leaf and incrementing the value of the label, squeezing them into a tuple. Let's try to abstract and extract these two responsibilities and then apply a series of simple transformations over them, while keeping the behavior unchanged.
+This simple code mixes together two concerns: creating a labeled leaf and incrementing the value of the label, squeezing them into a tuple. Let's try to abstract and extract these two responsibilities and then apply a series of simple transformations over them, while keeping the behavior unchanged.
 
 #### First transformation: from integer to tuple
 
