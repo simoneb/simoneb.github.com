@@ -9,7 +9,7 @@ public Tuple<int, Tree<Labeled<T>>> Label1<T>(int label, Tree<T> tree)
     {
         var lf = tree as Leaf<T>;
     
-        return Tuple.Create(label+1, leaf(labeled(label, lf.Value)));
+        return Tuple.Create(label + 1, leaf(labeled(label, lf.Value)));
     }
     else
     {

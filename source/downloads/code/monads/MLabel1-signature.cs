@@ -1,1 +1,0 @@
-public S<Tree<Labeled<T>>> MLabel1<T>(Tree<T> tree)

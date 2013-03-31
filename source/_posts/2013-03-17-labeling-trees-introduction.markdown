@@ -43,12 +43,13 @@ Let's call `Tree<Labeled<T>> Label<T>(Tree<T>)` such a function.
 
 {% include_code Label function lang:csharp monads/label-function-empty.cs %}
 
+<a id="label"></a>
 One constraint that we want to have is that we don't want to store the current label in shared memory and update it whenever we visit a leaf. We would like to do it in a purely functional way. This means that the state needs to be passed around explicitly, with a starting value of 0. This suggests that we'll need an additional support function that will thread the state via its arguments and return the updated state via its return value.  
 Given the structure of the data we're handling this function will also most likely call itself recursively.
 
 {% include_code Label and Label1 functions lang:csharp monads/functional-label.cs %}
 
-`Label1` accepts an integer value representing the current label and a tree to be labeled. Its return value is a tuple containing the new label value and the labeled tree. 
+`Label1` accepts an integer value representing the current label and a tree to be labeled. Its return value is a tuple containing the new label value and the labeled tree.
 
 Let's go through the code to see what it does exactly. You can see that it does two different things according to whether the tree to be labeled is a leaf or a branch.  
 In the first case it labels the leaf with the current value of the label, bumps it and returns a tuple containing the new label value and a leaf labeled with the value of the label before bumping it.  

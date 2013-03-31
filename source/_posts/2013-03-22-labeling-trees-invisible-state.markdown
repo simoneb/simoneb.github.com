@@ -7,95 +7,111 @@ categories:
 tags: monads
 ---
 
-This is the second post of a series about labeling trees. In the [previous post][introduction] we saw how to attach labels to the leaves of a binary tree, first manually and then functionally without any mutable state. We achieved that by writing a recursive `Label1` function which threaded the value of the label, the _state_, via function arguments and return value, incrementing it every time it found a leaf of the tree.
+This is the second post of a series about labeling trees. In the [previous post][introduction] we saw how to mark leaves of a binary tree with integer, incrementing labels, first manually and then functionally without relying on mutable state. We achieved it by writing a recursive `Label1` function which threaded the value of the label, the _state_, via function arguments and return value, incrementing it every time it came across a leaf of the tree.
 
-Let's review the signature of the `Label1` function and then move one step forward towards a different, less explicit way, to pass the state around.
+Let's review the signature of the `Label1` function and then move one step forward towards a different, less explicit way to pass the state around.
 
 ``` csharp
 Tuple<int, Tree<Labeled<T>>> Label1<T>(int label, Tree<T> tree)
 ```
 
-As the signature clearly shows the state passing is visible both in the arguments and the return value of the function. There is certainly a good reason for that: if we need to increment the label and use the new value whenever we find another leaf would it be possible to do otherwise? Let's try for one minute to imagine that we don't like this state passing concern to leak into the function arguments and that we would like to get rid of the extraneous `int label`. The question we are left with is how to move it around then, for instance how we would set its initial value. Let's have a look at the `Label` function we used last time:
+As the signature clearly shows the state passing is visible both in the arguments and the return value of the function. There is certainly a good reason for that: if we need to increment the label and use the new value whenever we come across the next leaf would it be possible to do otherwise? Let's as well review the part of the function which took care of applying labels to the leaves.
 
-{% include_code Label function lang:csharp monads/label-function.cs %}
+{% include_code Label1 leaf logic lang:csharp monads/label1-leaves.cs %}
 
-If `Label1` did not accept the initial value of the label via its arguments how can we provide the initial state 0? Let's try this variation:
+This simple two-liner mixes together two concerns: creating a labeled leaf and incrementing the value of the label, squeezing them into a tuple. Let's try to abstract and extract these two responsibilities and then apply a series of simple transformations over them, while keeping the behavior unchanged.
 
-``` csharp
-return Label1(tree).RunWithState(0).Item2;
-```
+#### First transformation: from integer to tuple
 
-The difference is that instead of calling `Label1` with two arguments and expecting a tuple back, we call it with one argument (the tree) and get something else back, which looks like a type with a method called `RunWithState`. Invoking this method with the initial state 0 returns again our tuple whose second item is the labeled tree. This is interesting, but how would we write such a type?
+{% include_code Label1 first transformation lang:csharp monads/label1-leaves-transformation-1.cs %}
 
-Well, doing this (yet unjustified) change to the `Label` function we have already defined the return type of `Label1`. It needs to be a type with a function `RunWithState` which given an integer value returns a tuple whose second item is of type `Tree<Labeled<T>>`. We can as well assume that the first item of the tuple remains of type `int`. 
+Here we extracted the increment concern as a standalone operation. `newAndOldLabel` is a tuple whose first item contains the new value of the label and the second item contains the previous, unchanged value. The second statement simply uses it to create the final tuple.
 
-Let's try to define how this type looks using the information we have so far and call it `S`.
+#### Second transformation: from tuple to functions returning tuples
+
+{% include_code Label1 second transformation lang:csharp monads/label1-leaves-transformation-2.cs %}
+
+Here we wrap the last statement from the previous step into a function which accesses `newAndOldLabel` via its arguments (rather than via local variables) and returns the result of invoking the function itself with `newAndOldLabel`.
+
+#### Third transformation: from anything to functions
+
+{% include_code Label1 third transformation lang:csharp monads/label1-leaves-transformation-3.cs %}
+
+Here we apply a transformation to both the label increment and the leaf-labeling logic. In the first case we wrap the creation of the `newAndOldLabel` tuple into a function which rather than grabbing the value of the label from the integer `label` argument of the containing function accesses it via its own argument.  
+In the second case we _curry_ the already existing function so that instead of accepting a tuple argument it accepts a single integer argument and returns a function which accepts another integer argument and finally returns our output tuple. The external function takes care of fixing the _current_ value used to apply a label to the leaf, while the inner function fixes the _new_, incremented label value as the first item of the resulting tuple.
+
+The rest of the code _binds_ together these two functions in a way which preserves the overall behavior.
+
+#### Fourth transformation: Bind
+
+As we just mentioned binding, let's finally abstract this concept into its own `Bind` generic function. This function basically encapsulates the logic of composing `bumpLabel` and `labelLeafCurried` from the previous transformation.
+
+{% include_code Label1 fourth transformation lang:csharp monads/label1-leaves-transformation-4.cs %}
+
+Before looking at its definition let's observe some of the characteristics of this function. It takes two functions as its arguments and returns a third function, which is then executed passing `label` as its only argument. Knowing both the signatures of the input functions and the return type of the containing `Label1` function implies that we also know the signature of the `Bind` function. Furthermore, being a replacement for the last few lines of code from the previous step means that the body will encapsulate the same logic in some form.
+
+{% include_code Bind lang:csharp monads/bind-tuples.cs %}
+
+The important thing to note is that we've come here by applying some simple and logical transformations to the initial code, and if you try to follow what this code is doing you can realize that the behavior is unchanged. One final step to abstract this even more is to make it generic over the second item of the tuples involved, thus leading to a new signature (the body is unchanged).
+
+{% include_code Generic Bind lang:csharp monads/bind-tuples-generic.cs %}
+
+#### Fifth transformation: S type
+
+The signature of our `Bind` function is a mouthful, but we can see that there's a recurring pattern in there. Specifically, we can see occurrences of `Func<int, Tuple<int, X>>` again and again. Let's encapsulate this into a generic type `S<T>` which will have a single member of that function type, arbitrarily named `RunWithState`.
 
 {% include_code Empty S<T> class lang:csharp monads/s-class-empty.cs %}
 
-Let's as well write the signature of our new Label1 function, which has now changed enough to deserve a different name `MLabel1`.
+Let's as well rewrite `Bind` in terms of `S`.
 
-{% include_code MLabel1 signature lang:csharp monads/mlabel1-signature.cs %}
+{% include_code Bind lang:csharp monads/bind.cs %}
 
-Our new function takes a tree and returns a type whose only member is a function which takes a label and returns a labeled tree. The next step is to fill the body of `MLabel1` but let's first reason a bit about what we should expect to see in there. Similarly to the previous `Label1` the body of this function will contain the labeling logic:
+Now we can apply one additional transformation to our `Label1` function by rewriting everything in terms of `S`.
 
-1. label the tree and bump the label in case it's a leaf
-2. recurse over left and right trees in case it's a branch
+{% include_code Label1 fifth transformation lang:csharp monads/label1-leaves-transformation-5.cs %}
 
-Let's start with the latter, which is simpler because it does not involve changes to the state as bumping only happens in case of leaves. We still need to access it though in order to make it available during the recursion, and the tricky aspect is where to get the state from. Previously we had it in the function arguments, now we don't have it anymore.  
-The catch is in the return value. While previously we returned immediately the final result of the _labeling computation_ in the form of a `Tuple<int, Tree<Labeled<T>>>` you can see that now we instead return a partial result in the form of a class containing a function. 
+#### Sixth transformation: Return
 
-In other words, while we previously had all the information to do the labeling in place (the unlabeled tree and the current label), we are now missing a fundamental piece of it (the current label), therefore all we can do is return a partial result, which turns out to be a means to get the complete result as soon as the missing piece of information is supplied. In pseudo code, we moved from something like this:
+We can finally observe one more pattern in how the `labelLeafS` function creates an instance of the `S` type. You can see that the only value this instance depends on is the labeled leaf created inside its `RunWithState` function, which is of exactly the same type as the generic argument of the instance `S<Tree<Labeled<T>>>`. Not that we benefit much from it now, but let's extract this pattern into a `Return` method, which given a `T`, returns an instance of `S<T>`.
 
-```csharp pseudo Label1
-(label, tree) => [label, labeledTree]
+{% include_code Return lang:csharp monads/return.cs %}
+
+Let's also rewrite the relevant part of the `Label1` function in terms of `Return`, additionally inlining the `labelLeafS` function.
+
+{% include_code Label1 sixth transformation lang:csharp monads/label1-leaves-transformation-6.cs %}
+
+### Hiding the state
+
+Before we move on and formalize the outcome of this long sequence of transformations in a new, named pattern let's observe one important thing in the final version of our code. The final statement returns a value of type `Tuple<int, Tree<Labeled<T>>>` simply because we execute the `RunWithState` function of the `S<Tree<Labeled<T>>>` instance returned by `Bind`.  Executing this function is also the only occasion in which we use the integer `label` argument of the containing function `Label1`.
+
+The observation is therefore: if rather than returning a `Tuple<int, Tree<Labeled<T>>>` we returned `S<Tree<Labeled<T>>>` then we wouldn't need the `label` argument in `Label1` and shift to the caller the responsibility of executing `RunWithState` with the initial label value. In fact `Label`, the caller, is already doing that, just more explicitly via function arguments, but we can see that we have an opportunity to change the pattern of providing the initial state by moving from a function with this signature:
+
+```csharp pseudo old signature
+int, Tree<T> => Tuple<int, Tree<Labeled<T>>>
 ```
 
-to something like this:
+To a function with this signature:
 
-
-```csharp pseudo MLabel1
-tree => label => [label, labeledTree]
+```csharp pseudo new signature
+Tree<T> => int => Tuple<int, Tree<Labeled<T>>>
 ```
 
-To those with some background of functional programming this might look very similar to currying, where a function of n arguments is transformed into n functions of 1 argument each. This resonates quite well with the signature of our functions, and indeed they match exactly.
+Those familiar with functional programming will find that this is vaguely similar to currying, where a function of n arguments is transformed into n functions of 1 argument each.
 
-This basically suggests that in the case of Label1 we were manipulating values in terms of trees and labels, while in the case of MLabel1 we are now manipulating both values (the tree) and functions of this shape `label => [label, labeledTree]`.
+We now have all the building blocks for rewriting our whole labeling functions `Label` and `Label1` from a completely new perspective, where the final outcome is the same but the means by which we get there are completely different. This also justifies creating two new functions called `MLabel` and `MLabel1`, respectively.
 
-With these new findings in mind let's review how tree branches were handled before by `Label1` and how we could reproduce the same logic with this different information available.
+{% include_code MLabel and MLabel1 lang:csharp monads/mlabel-and-mlabel1.cs %}
 
-{% include_code Label1 branch logic lang:csharp monads/label1-branches.cs %}
+Together with `Bind`, `Return` and the type `S<T>` this is the bulk of the code required to label trees in this new way. 
 
-Let's start with the first recursive invocation of the function which labels the left branch (line 3). We'll do the same here, but we're missing the current label value. Where do we get it from? Remember that we modified `Label` so that it calls the `RunWithState` function of the type we return from `MLabel1` with 0? That's kinda cool because it is `MLabel1` itself which decides what this type looks like, and specifically what the `RunWithState` function does. Now, we have the freedom to write that function in a way which grabs that initial state and use it in the rest of the computation.
+Now, although we have gone to great lengths talking about leaves, you might wonder why branches did not deserve their own considerations as I've included them in the code above already.  
+The reason is that as soon as you understand what we did with leaves it should be easy, even easier, to figure out what is happening with branches, as there is no state change involved. Before we try to understand the similarities I suggest you lookup the [final version of the code][label] from the previous post.
 
-{% include_code MLabel1 left labeling lang:csharp monads/mlabel1-left-labeling.cs %}
+The analogy should be more visible than it is for leaves, let's explain in words. We bind a recursive call to `MLabel1` fed with the left tree of the branch to a function which takes the left labeled tree and binds another recursive call, this time fed with the right tree, to a function which takes the right labeled tree and _returns_ an instance of the _state monad_ created from a branch whose left tree is accessed via a closure and the right is the argument of the function itself.
 
-Nice! Or maybe not. We basically replaced one line of code (line 3 in the previous example) with a dozen. Would you believe that in its final form this function will actually be shorter than the original one? Bear with me and try to understand what is going on here. First of all, we did nothing for the sake of doing it, we did all of this because we were missing one fundamental input, the label value. So what we had to do to circumvent this limitation is build a container around the logic which labels the left tree of the branch, and this container is a custom implementation of the `RunWithState` function of a new instance of the `S<Tree<Labeled<T>>>` class we build specifically for this purpose. Let's try to see what this instance does then.
+Besides the mouthful, did I just say _state monad_? Ah right, the state monad is the triplet represented by `S<T>`, `Bind` and `Return`, while `MLabel` and `MLabel1` are just our logic to label a tree in a third way besides manually and functionally: _monadically_.  
 
-If we call its `RunWithState` function with 0 it will:
+As for the state monad, we just invented it, but more on this in the next post.
 
-1. call the `MLabel1` function recursively to label the entire left tree and assign the result to a variable named `partialResult`. Notice that the type of such variable is obviously `S<Tree<Labeled<T>>>`
-2. call `partialResult.RunWithState` supplying `s0`, which is a state we got from outside and is supplied as an argument of the function we're writing by its caller. The return type is a tuple containing the new state and the labeled left tree and is assigned to the variable `result`
-3. return `result`
-
-I understand this can be daunting at first, but we're doing something which is functionally equivalent to what we were doing earlier in one line, with the only difference that now we're wrapping everything in a container which has the form of a function to overcome the lack of the missing initial state.
-
-The following step is do to the labeling of the right tree of the branch, but fortunately the code is the same as for the left tree, with the only difference that it's now using the right tree rather than the left.
-
-{% include_code MLabel1 right labeling lang:csharp monads/mlabel1-right-labeling.cs %}
-
-What we have now is two instances of the class `S<Tree<Labeled<T>>>` which are independent from each other. If you look again at the body of `Label1` you will see that labeling the right tree was dependent on labeling of the left tree, as it used the state resulting from the latter as an input for the former. How do we combine the `partialLeft` and `partialRight`  to obtain the same effect. The answer is again to wrap this logic into another function.
-
-{% include_code MLabel1 composing left and right partial results lang:csharp monads/mlabel1-composing-left-and-right.cs %}
-
-Ok although this is probably even worse than before let's not give up and go trough the code to see what this statement does.
-
-1. It executes the left-labeling computation by passing `s0` as the initial state. `s0` is supplied by the caller of the function we're writing
-2. It explicitly assigns the contents of the returned tuple to `s1`, the final state after the left tree has been labeled, and the labeled left tree
-3. It executes the right-labeling computation by passing `s1` as the initial state. The important thing to notice is that `s1` is the value of the label after labeling the left side of the branch
-4. It explicitly assigns the contents of the returned tuple to `s2`, the final state after the right tree has been labeled, and the labeled right tree
-5. Returns a tuple containing the overall final state `s2` as the first item and a labeled branch whose left tree is the labeled left tree and whose right tree is the labeled right tree
-
-What we're still missing is the labeling of the leaves, which involves attaching a label to the leaf and then bumping its value by 1.
-
-[introduction]: {{base_url}}/blog/2013/03/17/labeling-trees-introduction/
+[introduction]: /blog/2013/03/17/labeling-trees-introduction
+[label]: /blog/2013/03/17/labeling-trees-introduction#label
