@@ -9,7 +9,7 @@
   <meta name="author" content="Simone Busoli">
 
   
-  <meta name="description" content="Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies &hellip;">
+  <meta name="description" content="I&#8217;ve been a frequent user of LINQPad for several years now for I enjoy the simplicity with which you can fire it up, start writing code and see &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -79,6 +79,81 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-28T00:00:00+02:00" pubdate data-updated="true">Oct 28<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&#8217;ve been a frequent user of LINQPad for several years now for I enjoy the simplicity with which you can fire it up, start writing code and see the results immediately. I appreciate that other programming languages provide REPLs for you to try and even modify the currently running application, and I enjoy them when I have a chance to work with node.js or Ruby, but this is not something that people writing C# code are used to, and in any case outside the scope of this post.</p>
+<p>Recently my involvement with NUnit has increased to some extent and on several occasions I found myself needing to try running one-off tests and quickly see their outcome in order to validate bug reports or in general for experimenting. <br />As you can guess this would usually require launching a full-featured IDE like Visual Studio, create a class library project, reference NUnit, build and run some NUnit runner against the resulting assembly. That&#8217;s a lot of work for just getting a few lines of code to run.</p>
+<p>The idea was therefore to be able to run NUnit tests on LINQPad, which is definitely possible and quite simple, as it turns out.</p>
+<p>Now, a bit of background about NUnit is in order. The current release, which at the time of this writing is 2.6.2 and has been available for a few days, along with the whole 2.x series, has always kept the framework and the core separate.</p>
+<p>The framework is contained in the <em>nunit.framework.dll</em> assembly, which client code usually references in order to write tests. Just to mention a few it contains the TestAttribute and the Assert classes, which everyone writing unit tests should be familiar with.<br />The core, on the other hand, contains the code needed to run the tests, which includes test discovery, filtering, the logic for handling application domains and processes, and finally exposes this functionality by means of test runners. NUnit currently ships with a console and a graphical GUI runner.<br />This net separation of the core from the framework basically means that running tests in LINQPad via NUnit requires referencing both the core and the framework assemblies, and then invoking a runner pointing it at the current assembly. This is possible but also not the fastest and cleanest way to accomplish it.</p>
+<p>Enter NUnitLite. <strong>NUnitLite </strong>has been around for some time now and the main difference with NUnit v2 that is of some relevance here is that there is no distinction between the core and the framework. Everything is contained within a single assembly that you can reference from your tests, and the very same project containing the tests can be used to run them with a single one-liner.</p>
+<p>Although NUnitLite does not provide all of the features of NUnit it has quite enough of them for most needs, and above all simplifies our life a lot here.<br />On the other side, we&#8217;re going to leverage a new feature available in LINQPad, the ability to reference NuGet packages, which right now is provided in the beta version downloadable from <a href="http://www.linqpad.net/beta.aspx" title="LINQPad Beta">here</a>.&nbsp;</p>
+<p>Now that the ground is set here are the steps to get started writing unit tests in LINQPad:</p>
+<ol>
+<li>Create a new query and set its Language to C# Program, which will create a stub main method</li>
+<li>Add the NUnitLite NuGet package, which is easily done by hitting F4, then Add NuGet&#8230; and then looking up and selecting NUnitLite. Also add the namespaces NUnit.Framework and NUnitLite.Runner</li>
+<li>Fill the main method with the single line which will allow to run the tests in the current assembly and finally start writing unit tests.<p /><figure class='code'><figcaption><span>NUnitLite in LINQPad  (linqpad-nunitlite.cs)</span> <a href='/downloads/code/linqpad-nunitlite.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">new</span> <span class="n">NUnitLite</span><span class="p">.</span><span class="n">Runner</span><span class="p">.</span><span class="n">TextUI</span><span class="p">().</span><span class="n">Execute</span><span class="p">(</span><span class="k">new</span><span class="p">[]{</span><span class="s">&quot;-noheader&quot;</span><span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Define other methods and classes here</span>
+</span><span class='line'><span class="na">[Test]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">SomeTest</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Assert</span><span class="p">.</span><span class="n">Pass</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></li>
+<li>Hit F5 and see the results of the test run</li>
+</ol>
+<p>The steps outlined above are quick and simple, but still require some time if you have to do it over and over, therefore a better option would be to save the raw template as a LINQPad query somewhere on your file system, or even better, although this chance is limited to the owners of a professional license, using a snippet which is available for download from the NUnit wiki <a href="http://www.nunit.org/wiki/doku.php?id=extras:nunit_via_linqpad" title="NUnit Wiki">here</a>.</p>
+<p>The snippet takes care of the whole plumbing so you just need to download and copy it to the snippets folder, usually in <em>%userprofile%\Documents\LINQPad Snippets</em>, then just type the snippet shortcut,&nbsp;<strong>nunit</strong>, in any query window and you&#8217;re ready to write your tests.</p>
+<ol> </ol>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -247,6 +322,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/03/22/labeling-trees-invisible-state/">Labeling trees - Invisible state</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/03/17/labeling-trees-introduction/">Labeling Trees - Introduction</a>
       </li>
     
@@ -260,10 +339,6 @@
     
       <li class="post">
         <a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, present and future of .NET assembly merging</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2011/11/19/speaking-s-overrated/">Speaking&#8217;s overrated</a>
       </li>
     
   </ul>

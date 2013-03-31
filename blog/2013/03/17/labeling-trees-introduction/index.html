@@ -341,7 +341,8 @@ Let&#8217;s call <code>Tree&lt;Labeled&lt;T&gt;&gt; Label&lt;T&gt;(Tree&lt;T&gt;
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>One constraint that we want to have is that we don&#8217;t want to store the current label in shared memory and update it whenever we visit a leaf. We would like to do it in a purely functional way. This means that the state needs to be passed around explicitly, with a starting value of 0. This suggests that we&#8217;ll need an additional support function that will thread the state via its arguments and return the updated state via its return value.<br/>
+<p><a id="label"></a>
+One constraint that we want to have is that we don&#8217;t want to store the current label in shared memory and update it whenever we visit a leaf. We would like to do it in a purely functional way. This means that the state needs to be passed around explicitly, with a starting value of 0. This suggests that we&#8217;ll need an additional support function that will thread the state via its arguments and return the updated state via its return value.<br/>
 Given the structure of the data we&#8217;re handling this function will also most likely call itself recursively.</p>
 
 <figure class='code'><figcaption><span>Label and Label1 functions  (functional-label.cs)</span> <a href='/downloads/code/monads/functional-label.cs'>download</a></figcaption>
@@ -379,7 +380,7 @@ Given the structure of the data we&#8217;re handling this function will also mos
 </span><span class='line'>    <span class="p">{</span>
 </span><span class='line'>        <span class="kt">var</span> <span class="n">lf</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
 </span><span class='line'>
-</span><span class='line'>        <span class="k">return</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">label</span><span class="p">+</span><span class="m">1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">label</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
 </span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>    <span class="k">else</span>
 </span><span class='line'>    <span class="p">{</span>
@@ -448,6 +449,8 @@ You might notice that it is this way of recursing that enables the depth-first a
         <a class="basic-alignment left" href="/blog/2013/01/19/async-support-in-nunit/" title="Previous Post: Async support in NUnit">&laquo; Async support in NUnit</a>
       
       
+        <a class="basic-alignment right" href="/blog/2013/03/22/labeling-trees-invisible-state/" title="Next Post: Labeling trees - Invisible state">Labeling trees - Invisible state &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -484,6 +487,10 @@ You might notice that it is this way of recursing that enables the depth-first a
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/03/22/labeling-trees-invisible-state/">Labeling trees - Invisible state</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/03/17/labeling-trees-introduction/">Labeling Trees - Introduction</a>
       </li>
     
@@ -497,10 +504,6 @@ You might notice that it is this way of recursing that enables the depth-first a
     
       <li class="post">
         <a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, present and future of .NET assembly merging</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2011/11/19/speaking-s-overrated/">Speaking's overrated</a>
       </li>
     
   </ul>

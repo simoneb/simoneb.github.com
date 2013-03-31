@@ -1,0 +1,1 @@
+return Bind(bumpLabel, labelLeafCurried)(label);

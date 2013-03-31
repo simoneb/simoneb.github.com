@@ -1,0 +1,642 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Labeling trees - Invisible state - simoneb's blog</title>
+  <meta name="author" content="Simone Busoli">
+
+  
+  <meta name="description" content="This is the second post of a series about labeling trees. In the previous post we saw how to mark leaves of a binary tree with integer, incrementing &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/simoneb" rel="alternate" title="simoneb's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-27143372-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">simoneb's blog</a></h1>
+  
+    <h2>about design, development, profession and avoidance of fluff</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="http://feeds.feedburner.com/simoneb" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:simoneb.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <!--li><a href="/">Home</a></li-->
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/about">About</a></li>
+  <!--li><a href="/blog/archives">Archives</a></li-->
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Labeling Trees - Invisible State</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-22T01:16:00+01:00" pubdate data-updated="true">Mar 22<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This is the second post of a series about labeling trees. In the <a href="/blog/2013/03/17/labeling-trees-introduction">previous post</a> we saw how to mark leaves of a binary tree with integer, incrementing labels, first manually and then functionally without relying on mutable state. We achieved it by writing a recursive <code>Label1</code> function which threaded the value of the label, the <em>state</em>, via function arguments and return value, incrementing it every time it came across a leaf of the tree.</p>
+
+<p>Let&#8217;s review the signature of the <code>Label1</code> function and then move one step forward towards a different, less explicit way to pass the state around.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;</span> <span class="n">Label1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="kt">int</span> <span class="n">label</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As the signature clearly shows the state passing is visible both in the arguments and the return value of the function. There is certainly a good reason for that: if we need to increment the label and use the new value whenever we come across the next leaf would it be possible to do otherwise? Let&#8217;s as well review the part of the function which took care of applying labels to the leaves.</p>
+
+<figure class='code'><figcaption><span>Label1 leaf logic  (label1-leaves.cs)</span> <a href='/downloads/code/monads/label1-leaves.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="kt">var</span> <span class="n">lf</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">label</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This simple two-liner mixes together two concerns: creating a labeled leaf and incrementing the value of the label, squeezing them into a tuple. Let&#8217;s try to abstract and extract these two responsibilities and then apply a series of simple transformations over them, while keeping the behavior unchanged.</p>
+
+<h4>First transformation: from integer to tuple</h4>
+
+<figure class='code'><figcaption><span>Label1 first transformation  (label1-leaves-transformation-1.cs)</span> <a href='/downloads/code/monads/label1-leaves-transformation-1.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// previous:    int</span>
+</span><span class='line'><span class="c1">// current:     Tuple&lt;int, int&gt;</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">newAndOldLabel</span> <span class="p">=</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">label</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">label</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">newAndOldLabel</span><span class="p">.</span><span class="n">Item1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">newAndOldLabel</span><span class="p">.</span><span class="n">Item2</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here we extracted the increment concern as a standalone operation. <code>newAndOldLabel</code> is a tuple whose first item contains the new value of the label and the second item contains the previous, unchanged value. The second statement simply uses it to create the final tuple.</p>
+
+<h4>Second transformation: from tuple to functions returning tuples</h4>
+
+<figure class='code'><figcaption><span>Label1 second transformation  (label1-leaves-transformation-2.cs)</span> <a href='/downloads/code/monads/label1-leaves-transformation-2.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// previous:    Tuple&lt;int, Tree&lt;Labeled&lt;T&gt;&gt;&gt;</span>
+</span><span class='line'><span class="c1">// current:     Tuple&lt;int, int&gt; =&gt; Tuple&lt;int, Tree&lt;Labeled&lt;T&gt;&gt;&gt;</span>
+</span><span class='line'><span class="n">Func</span><span class="p">&lt;</span><span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;&gt;</span> <span class="n">labelLeaf</span> <span class="p">=</span>
+</span><span class='line'>    <span class="n">arguments</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">arguments</span><span class="p">.</span><span class="n">Item1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">arguments</span><span class="p">.</span><span class="n">Item2</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="nf">labelLeaf</span><span class="p">(</span><span class="n">newAndOldLabel</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here we wrap the last statement from the previous step into a function which accesses <code>newAndOldLabel</code> via its arguments (rather than via local variables) and returns the result of invoking the function itself with <code>newAndOldLabel</code>.</p>
+
+<h4>Third transformation: from anything to functions</h4>
+
+<figure class='code'><figcaption><span>Label1 third transformation  (label1-leaves-transformation-3.cs)</span> <a href='/downloads/code/monads/label1-leaves-transformation-3.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// previous:    Tuple&lt;int, int&gt;</span>
+</span><span class='line'><span class="c1">// current:     int =&gt; Tuple&lt;int, int&gt;</span>
+</span><span class='line'><span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">bumpLabel</span> <span class="p">=</span> <span class="n">s</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// previous:    Tuple&lt;int, int&gt; =&gt; Tuple&lt;int, Tree&lt;Labeled&lt;T&gt;&gt;&gt;</span>
+</span><span class='line'><span class="c1">// current:     int =&gt; int =&gt; Tuple&lt;int, Tree&lt;Labeled&lt;T&gt;&gt;&gt;</span>
+</span><span class='line'><span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;&gt;&gt;</span> <span class="n">labelLeafCurried</span> <span class="p">=</span>
+</span><span class='line'>    <span class="n">labelValue</span> <span class="p">=&gt;</span> <span class="n">s</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">labelValue</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)));</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;</span> <span class="n">bumpResult</span> <span class="p">=</span> <span class="n">bumpLabel</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="nf">labelLeafCurried</span><span class="p">(</span><span class="n">bumpResult</span><span class="p">.</span><span class="n">Item2</span><span class="p">)(</span><span class="n">bumpResult</span><span class="p">.</span><span class="n">Item1</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here we apply a transformation to both the label increment and the leaf-labeling logic. In the first case we wrap the creation of the <code>newAndOldLabel</code> tuple into a function which rather than grabbing the value of the label from the integer <code>label</code> argument of the containing function accesses it via its own argument.<br/>
+In the second case we <em>curry</em> the already existing function so that instead of accepting a tuple argument it accepts a single integer argument and returns a function which accepts another integer argument and finally returns our output tuple. The external function takes care of fixing the <em>current</em> value used to apply a label to the leaf, while the inner function fixes the <em>new</em>, incremented label value as the first item of the resulting tuple.</p>
+
+<p>The rest of the code <em>binds</em> together these two functions in a way which preserves the overall behavior.</p>
+
+<h4>Fourth transformation: Bind</h4>
+
+<p>As we just mentioned binding, let&#8217;s finally abstract this concept into its own <code>Bind</code> generic function. This function basically encapsulates the logic of composing <code>bumpLabel</code> and <code>labelLeafCurried</code> from the previous transformation.</p>
+
+<figure class='code'><figcaption><span>Label1 fourth transformation  (label1-leaves-transformation-4.cs)</span> <a href='/downloads/code/monads/label1-leaves-transformation-4.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">bumpLabel</span><span class="p">,</span> <span class="n">labelLeafCurried</span><span class="p">)(</span><span class="n">label</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Before looking at its definition let&#8217;s observe some of the characteristics of this function. It takes two functions as its arguments and returns a third function, which is then executed passing <code>label</code> as its only argument. Knowing both the signatures of the input functions and the return type of the containing <code>Label1</code> function implies that we also know the signature of the <code>Bind</code> function. Furthermore, being a replacement for the last few lines of code from the previous step means that the body will encapsulate the same logic in some form.</p>
+
+<figure class='code'><figcaption><span>Bind  (bind-tuples.cs)</span> <a href='/downloads/code/monads/bind-tuples.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;&gt;</span> <span class="n">Bind</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">m</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;&gt;&gt;</span> <span class="n">k</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">s0</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">mResult</span> <span class="p">=</span> <span class="n">m</span><span class="p">(</span><span class="n">s0</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">kResult</span> <span class="p">=</span> <span class="n">k</span><span class="p">(</span><span class="n">mResult</span><span class="p">.</span><span class="n">Item2</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">kResult</span><span class="p">(</span><span class="n">mResult</span><span class="p">.</span><span class="n">Item1</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The important thing to note is that we&#8217;ve come here by applying some simple and logical transformations to the initial code, and if you try to follow what this code is doing you can realize that the behavior is unchanged. One final step to abstract this even more is to make it generic over the second item of the tuples involved, thus leading to a new signature (the body is unchanged).</p>
+
+<figure class='code'><figcaption><span>Generic Bind  (bind-tuples-generic.cs)</span> <a href='/downloads/code/monads/bind-tuples-generic.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;&gt;</span> <span class="n">Bind</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">m</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Func</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;&gt;&gt;</span> <span class="n">k</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Fifth transformation: S type</h4>
+
+<p>The signature of our <code>Bind</code> function is a mouthful, but we can see that there&#8217;s a recurring pattern in there. Specifically, we can see occurrences of <code>Func&lt;int, Tuple&lt;int, X&gt;&gt;</code> again and again. Let&#8217;s encapsulate this into a generic type <code>S&lt;T&gt;</code> which will have a single member of that function type, arbitrarily named <code>RunWithState</code>.</p>
+
+<figure class='code'><figcaption><span>Empty S<T> class  (s-class-empty.cs)</span> <a href='/downloads/code/monads/s-class-empty.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">S</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">RunWithState</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s as well rewrite <code>Bind</code> in terms of <code>S</code>.</p>
+
+<figure class='code'><figcaption><span>Bind  (bind.cs)</span> <a href='/downloads/code/monads/bind.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">U</span><span class="p">&gt;</span> <span class="n">Bind</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;(</span><span class="n">S</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">m</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">U</span><span class="p">&gt;&gt;</span> <span class="n">k</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">U</span><span class="p">&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">s0</span> <span class="p">=&gt;</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;</span> <span class="n">mResult</span> <span class="p">=</span> <span class="n">m</span><span class="p">.</span><span class="n">RunWithState</span><span class="p">(</span><span class="n">s0</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="k">return</span> <span class="nf">k</span><span class="p">(</span><span class="n">mResult</span><span class="p">.</span><span class="n">Item2</span><span class="p">).</span><span class="n">RunWithState</span><span class="p">(</span><span class="n">mResult</span><span class="p">.</span><span class="n">Item1</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we can apply one additional transformation to our <code>Label1</code> function by rewriting everything in terms of <code>S</code>.</p>
+
+<figure class='code'><figcaption><span>Label1 fifth transformation  (label1-leaves-transformation-5.cs)</span> <a href='/downloads/code/monads/label1-leaves-transformation-5.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="kt">var</span> <span class="n">bumpLabelS</span> <span class="p">=</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">s0</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s0</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;&gt;</span> <span class="n">labelLeafS</span> <span class="p">=</span> <span class="n">labelValue</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">s1</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">labelValue</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">)))</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">bumpLabelS</span><span class="p">,</span> <span class="n">labelLeafS</span><span class="p">).</span><span class="n">RunWithState</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Sixth transformation: Return</h4>
+
+<p>We can finally observe one more pattern in how the <code>labelLeafS</code> function creates an instance of the <code>S</code> type. You can see that the only value this instance depends on is the labeled leaf created inside its <code>RunWithState</code> function, which is of exactly the same type as the generic argument of the instance <code>S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt;</code>. Not that we benefit much from it now, but let&#8217;s extract this pattern into a <code>Return</code> method, which given a <code>T</code>, returns an instance of <code>S&lt;T&gt;</code>.</p>
+
+<figure class='code'><figcaption><span>Return  (return.cs)</span> <a href='/downloads/code/monads/return.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Return</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">T</span> <span class="k">value</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">s</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="k">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s also rewrite the relevant part of the <code>Label1</code> function in terms of <code>Return</code>, additionally inlining the <code>labelLeafS</code> function.</p>
+
+<figure class='code'><figcaption><span>Label1 sixth transformation  (label1-leaves-transformation-6.cs)</span> <a href='/downloads/code/monads/label1-leaves-transformation-6.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">bumpLabelS</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">labelValue</span> <span class="p">=&gt;</span> <span class="n">Return</span><span class="p">(</span><span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">labelValue</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">))))</span>
+</span><span class='line'>       <span class="p">.</span><span class="n">RunWithState</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Hiding the state</h3>
+
+<p>Before we move on and formalize the outcome of this long sequence of transformations in a new, named pattern let&#8217;s observe one important thing in the final version of our code. The final statement returns a value of type <code>Tuple&lt;int, Tree&lt;Labeled&lt;T&gt;&gt;&gt;</code> simply because we execute the <code>RunWithState</code> function of the <code>S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt;</code> instance returned by <code>Bind</code>.  Executing this function is also the only occasion in which we use the integer <code>label</code> argument of the containing function <code>Label1</code>.</p>
+
+<p>The observation is therefore: if rather than returning a <code>Tuple&lt;int, Tree&lt;Labeled&lt;T&gt;&gt;&gt;</code> we returned <code>S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt;</code> then we wouldn&#8217;t need the <code>label</code> argument in <code>Label1</code> and shift to the caller the responsibility of executing <code>RunWithState</code> with the initial label value. In fact <code>Label</code>, the caller, is already doing that, just more explicitly via function arguments, but we can see that we have an opportunity to change the pattern of providing the initial state by moving from a function with this signature:</p>
+
+<figure class='code'><figcaption><span>pseudo old signature</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To a function with this signature:</p>
+
+<figure class='code'><figcaption><span>pseudo new signature</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">=&gt;</span> <span class="kt">int</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Those familiar with functional programming will find that this is vaguely similar to currying, where a function of n arguments is transformed into n functions of 1 argument each.</p>
+
+<p>We now have all the building blocks for rewriting our whole labeling functions <code>Label</code> and <code>Label1</code> from a completely new perspective, where the final outcome is the same but the means by which we get there are completely different. This also justifies creating two new functions called <code>MLabel</code> and <code>MLabel1</code>, respectively.</p>
+
+<figure class='code'><figcaption><span>MLabel and MLabel1  (mlabel-and-mlabel1.cs)</span> <a href='/downloads/code/monads/mlabel-and-mlabel1.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">MLabel</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">MLabel1</span><span class="p">(</span><span class="n">tree</span><span class="p">).</span><span class="n">RunWithState</span><span class="p">(</span><span class="m">0</span><span class="p">).</span><span class="n">Item2</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">Labeled</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;&gt;</span> <span class="n">MLabel1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">tree</span> <span class="k">is</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">lf</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">updateState</span> <span class="p">=</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">s0</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">s0</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">updateState</span><span class="p">,</span>
+</span><span class='line'>                    <span class="n">labelValue</span> <span class="p">=&gt;</span> <span class="n">Return</span><span class="p">(</span><span class="n">leaf</span><span class="p">(</span><span class="n">labeled</span><span class="p">(</span><span class="n">labelValue</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">))));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">br</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Branch</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">MLabel1</span><span class="p">(</span><span class="n">br</span><span class="p">.</span><span class="n">Left</span><span class="p">),</span>
+</span><span class='line'>                    <span class="n">left</span> <span class="p">=&gt;</span> <span class="n">Bind</span><span class="p">(</span><span class="n">MLabel1</span><span class="p">(</span><span class="n">br</span><span class="p">.</span><span class="n">Right</span><span class="p">),</span>
+</span><span class='line'>                                 <span class="n">right</span> <span class="p">=&gt;</span> <span class="n">Return</span><span class="p">(</span><span class="n">branch</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">))));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Together with <code>Bind</code>, <code>Return</code> and the type <code>S&lt;T&gt;</code> this is the bulk of the code required to label trees in this new way.</p>
+
+<p>Now, although we have gone to great lengths talking about leaves, you might wonder why branches did not deserve their own considerations as I&#8217;ve included them in the code above already.<br/>
+The reason is that as soon as you understand what we did with leaves it should be easy, even easier, to figure out what is happening with branches, as there is no state change involved. Before we try to understand the similarities I suggest you lookup the <a href="/blog/2013/03/17/labeling-trees-introduction#label">final version of the code</a> from the previous post.</p>
+
+<p>The analogy should be more visible than it is for leaves, let&#8217;s explain in words. We bind a recursive call to <code>MLabel1</code> fed with the left tree of the branch to a function which takes the left labeled tree and binds another recursive call, this time fed with the right tree, to a function which takes the right labeled tree and <em>returns</em> an instance of the <em>state monad</em> created from a branch whose left tree is accessed via a closure and the right is the argument of the function itself.</p>
+
+<p>Besides the mouthful, did I just say <em>state monad</em>? Ah right, the state monad is the triplet represented by <code>S&lt;T&gt;</code>, <code>Bind</code> and <code>Return</code>, while <code>MLabel</code> and <code>MLabel1</code> are just our logic to label a tree in a third way besides manually and functionally: <em>monadically</em>.</p>
+
+<p>As for the state monad, we just invented it, but more on this in the next post.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Simone Busoli</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-22T01:16:00+01:00" pubdate data-updated="true">Mar 22<span>nd</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state/" data-via="simonebu" data-counturl="http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/03/17/labeling-trees-introduction/" title="Previous Post: Labeling Trees - Introduction">&laquo; Labeling Trees - Introduction</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About me</h1>
+  <p>
+	<strong>Simone Busoli</strong>
+	<br/>
+	creative software engineer
+  </p>
+<!-- AddThis Follow BEGIN -->
+<div class="addthis_toolbox addthis_32x32_style addthis_default_style">
+<a class="addthis_button_twitter_follow" addthis:userid="simonebu"></a>
+<a class="addthis_button_linkedin_follow" addthis:userid="simonebusoli"></a>
+<a class="addthis_button_rss_follow" addthis:userid="http://feeds.feedburner.com/simoneb"></a>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5143bd0a20061164"></script>
+<!-- AddThis Follow END -->
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/22/labeling-trees-invisible-state/">Labeling trees - Invisible state</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/17/labeling-trees-introduction/">Labeling Trees - Introduction</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/19/async-support-in-nunit/">Async support in NUnit</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, present and future of .NET assembly merging</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/simoneb">@simoneb</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'simoneb',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Simone Busoli -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'simoneb';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state/';
+        var disqus_url = 'http://simoneb.github.com/blog/2013/03/22/labeling-trees-invisible-state/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
