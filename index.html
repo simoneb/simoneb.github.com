@@ -9,7 +9,7 @@
   <meta name="author" content="Simone Busoli">
 
   
-  <meta name="description" content="This is the second post of a series about labeling trees. In the previous post we saw how to mark leaves of a binary tree with integer, incrementing &hellip;">
+  <meta name="description" content="In the last post of this series we learned how to label a binary tree monadically, and in doing so we discovered the state monad. I&#8217;ve &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -79,6 +79,150 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/07/labeling-trees-exercise-1/">Labeling Trees - Exercise 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-07T19:41:00+02:00" pubdate data-updated="true">Apr 7<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In the <a href="/blog/2013/03/31/labeling-trees-invisible-state">last post</a> of this series we learned how to label a binary tree monadically, and in doing so we discovered the state monad. I&#8217;ve collected the pieces we built incrementally last time into <a href="https://gist.github.com/simoneb/5332234/7beedb523a5c8ed2c72142000c881b3b3a890703">this gist</a> containing the whole monadic label implementation as a <a href="http://www.linqpad.net">LINQPad</a> query that you can simply copy and run. I&#8217;ll keep making changes to that gist and create links which point to specific revisions from now on.</p>
+
+<p>As I mentioned in the <a href="/blog/2013/03/17/labeling-trees-introduction">introduction</a> I decided to write this series as a result of watching some years ago Brian Beckman talking about monads and not being able to grasp the topic at that time. Going through it again and explaining what it took me to understand it will hopefully help someone else follow the same path. Up until now we&#8217;ve rediscovered what Brian explained in his interviews, but the accompanying source code (that I&#8217;ve copied in <a href="https://gist.github.com/simoneb/627a349a1632307c301b">this gist</a> for convenience) also gave 10 assignments to the reader - without solutions - which I&#8217;m going to tackle in the remainder of this series.</p>
+
+<p>The exercises are of varying difficulties, basically expanding on the topic of the state monad with tasks which require generalizing the pattern and applying it to solve problems other than labeling binary trees. So, without further ado, let&#8217;s move on to the first exercise.</p>
+
+<h3>Exercise 1</h3>
+
+<blockquote><p>generalize over the type of the state, from int
+to &lt;TState>, say, so that the S type can handle any kind of
+state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
+&#8220;label-content pair&#8221; to &#8220;state-content pair&#8221;.</p></blockquote>
+
+<p>I rephrased the original text of the exercise a little bit so it matches our own implementation rather than Brian&#8217;s. Some type names are different as well as some design choices, but the overall concept is the same. Let&#8217;s see what this exercise is about.</p>
+
+<p>So far we used a <code>Labeled&lt;T&gt;</code> class to represent the contents of a labeled tree - leaves, specifically. This class is a simple container of label and value pairs, where only the latter is generically parameterized via the <code>T</code> generic parameter. This exercise requires to parameterize the type of the label/state too, which is currently fixed to be an integer.  It doesn&#8217;t sound very difficult, does it? We simply come up with a new type <code>StateContent&lt;TState, T&gt;</code> which does just that, and then adapt the usages of <code>Labeled&lt;T&gt;</code> to match the new type, as shown in this diff.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gu">@@ -59,10 +59,10 @@ public class Branch&lt;T&gt; : Tree&lt;T&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public class Labeled&lt;T&gt;</span>
+</span><span class='line'><span class="gi">+public class StateContent&lt;TState, T&gt;</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    public int Label { get; private set; }</span>
+</span><span class='line'><span class="gi">+    public TState State { get; private set; }</span>
+</span><span class='line'>     public T Value { get; private set; }
+</span><span class='line'>
+</span><span class='line'><span class="gd">-    public Labeled(int label, T value)</span>
+</span><span class='line'><span class="gi">+    public StateContent(TState state, T value)</span>
+</span><span class='line'>     {
+</span><span class='line'><span class="gd">-        Label = label;</span>
+</span><span class='line'><span class="gi">+        State = state;</span>
+</span><span class='line'>         Value = value;
+</span><span class='line'><span class="gu">@@ -72,3 +72,3 @@ public class Labeled&lt;T&gt;</span>
+</span><span class='line'>     {
+</span><span class='line'><span class="gd">-        return new { Label, Value }.ToString();</span>
+</span><span class='line'><span class="gi">+        return new { State, Value }.ToString();</span>
+</span><span class='line'>     }
+</span><span class='line'><span class="gu">@@ -86,5 +86,5 @@ public Tree&lt;T&gt; branch&lt;T&gt;(Tree&lt;T&gt; left, Tree&lt;T&gt; right)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public Labeled&lt;T&gt; labeled&lt;T&gt;(int label, T value)</span>
+</span><span class='line'><span class="gi">+public StateContent&lt;TState, T&gt; stateContent&lt;TState, T&gt;(TState state, T value)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    return new Labeled&lt;T&gt;(label, value);</span>
+</span><span class='line'><span class="gi">+    return new StateContent&lt;TState, T&gt;(state, value);</span>
+</span><span class='line'> }
+</span><span class='line'><span class="gu">@@ -117,3 +117,3 @@ public static S&lt;T&gt; Return&lt;T&gt;(T value)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public Tree&lt;Labeled&lt;T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'><span class="gi">+public Tree&lt;StateContent&lt;int, T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gu">@@ -122,3 +122,3 @@ public Tree&lt;Labeled&lt;T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'><span class="gi">+public S&lt;Tree&lt;StateContent&lt;int, T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gu">@@ -134,3 +134,3 @@ public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'>         return Bind(updateState,
+</span><span class='line'><span class="gd">-                    label =&gt; Return(leaf(labeled(label, lf.Value))));</span>
+</span><span class='line'><span class="gi">+                    label =&gt; Return(leaf(stateContent(label, lf.Value))));</span>
+</span><span class='line'>     }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It was an easy one this time, which sets the foundation for the next exercise, but we&#8217;ll come to it in the next post. The source code after this change is in the same old gist at <a href="https://gist.github.com/simoneb/5332234/632617aa38af3bbce179bd3891c1ffc660881e92">this revision</a>.</p>
+
+<p>Stay tuned!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -802,261 +946,6 @@ You might notice that it is this way of recursing that enables the depth-first a
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/01/19/async-support-in-nunit/">Async Support in NUnit</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-01-19T00:00:00+01:00" pubdate data-updated="true">Jan 19<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>.NET&rsquo;s version 5 of the C# compiler introduced support for an interesting feature related to multithreaded programming, available via the new <em>async</em> and <em>await</em> keywords.</p>
-
-<p>This post is not much about the feature itself as plenty of information is available online, but rather the support that was introduced for it in NUnit. Here is a simple NUnit test:</p>
-
-<p><figure class='code'><figcaption><span>A simple test  (nunit-simple-test.cs)</span> <a href='/downloads/code/nunit-simple-test.cs'>download</a></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">answer</span> <span class="p">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<p>So far so good, but let&rsquo;s assume that invoking that method on the 8 ball is really expensive in terms of execution time and you would like your production code invoking it to not just sit and wait until it completes.
-That&rsquo;s where the async feature fits, and you could change the method to be an async, Task-returning one instead. How to make <em>that specific</em> method asynchronous is definitely out of scope here though.</p>
-
-<h3>Testing asynchronous code</h3>
-
-<p>In order to call the new method asynchronously the test code would need to be adapted as shown here:</p>
-
-<p><figure class='code'><figcaption><span>A simple async test  (nunit-simple-async-test.cs)</span> <a href='/downloads/code/nunit-simple-async-test.cs'>download</a></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">answer</span> <span class="p">=</span> <span class="k">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// why am I still here?</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<p>Awaiting the result of the method implies that the test method has to be marked as async, too.
-Now, assuming that you&rsquo;re not planning to change job you would really expect the test to fail, which it instead doesn&rsquo;t if run with a version of NUnit older than 2.6.2.</p>
-
-<p>The reason behind this incorrect behavior is that asynchronous methods are rewritten by the C# compiler in a way that they return control to the caller as soon as they await on an operation which has not completed yet, as is the case with the invocation of the <em>ShouldIChangeJob</em> method. In this case therefore the control is returned to the code which called the <em>OneSimpleTest</em> method, which turns out to be NUnit itself.</p>
-
-<p>Up to version 2.6.2 of NUnit the test runner always assumed that as soon as a test method returned then its execution was complete, and thus if no assertion failures were reported the test was successful.
-This is no longer the case with asynchronous methods, as we just found out, because the now asynchronous test returns immediately after invoking <em>ShouldIChangeJob</em> on line 5.</p>
-
-<p>Without any support from NUnit there was a simple fix available already, which was to <em>Wait</em> on the <em>Task</em> returned by the asynchronous method rather than <em>await</em> it.</p>
-
-<p><figure class='code'><figcaption><span>A simple test - workaround for async  (nunit-simple-test-workaround.cs)</span> <a href='/downloads/code/nunit-simple-test-workaround.cs'>download</a></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">Task</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;</span> <span class="n">answer</span> <span class="p">=</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">answer</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">.</span><span class="n">Result</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<p>This would work perfectly, although it&rsquo;s not as nice as being able to write the test code in the same way you would write the production code, that is, by using the await keyword. This has the additional disadvantage of exception handling behaving differently between await and Wait. When using await the code looks like everything is happening sequentially, and you can catch exceptions in the same way you do with sequential code. If <em>ShouldIChangeJob</em> threw an exception of the fictitious type <em>TimeoutException</em> you would see exactly that exception bubbling up from your code. When using Wait instead a <em>System.AggregateException</em> would bubble up, which is a sort of container for multiple exceptions which might have happened during an asynchronous operation, and would wrap the real <em>TimeoutException</em>. This of course makes await more intuitive and preferable over Wait.</p>
-
-<h3>Just a matter of Waiting</h3>
-
-<p>Introducing this support in NUnit doesn&rsquo;t necessarily mean that NUnit has now become asynchronous or that it allows to run tests in parallel. This is something which is being worked on for the next 3rd major release of NUnit though.</p>
-
-<p>What we did in NUnit 2 was to allow users to write async tests without worrying about tests completing before their assertions were even evaluated, in addition to supporting thorough use of asynchronous methods in some specific framework use cases.
-In other words, when invoking asynchronous test methods NUnit will &ldquo;sit and wait&rdquo; on your behalf, until the test method, along with all the asynchronous operations it invokes, has finally completed.</p>
-
-<h3>Behind the scenes</h3>
-
-<p>As should be clear by now NUnit&rsquo;s support for async methods is mainly a matter of detecting async methods, calling Wait on the Task returned by them and handling exceptions accordingly. This is true in most cases, although NUnit&rsquo;s need to be compatible with .NET 2.0 means that all of this logic needs to be implemented without referencing any .NET > 2.0 assemblies.</p>
-
-<p>Yet this was still not as straightforward, but we really strived to open up as many intuitive usages of await/async as possible so to relieve the users from having to even think about it.</p>
-
-<p>Although you might not have noticed it you&rsquo;ve already encountered one example of why this is not trivial. In the asynchronous sample above you can see that the test method is void.
-What does it mean exactly? Well, it means that there is no Task on which to call Wait, and that really waiting for it to complete means setting up a new <em>SynchronizationContext</em> to hook into the .NET implementation of the async/await feature.</p>
-
-<p>Although asynchronous void methods were not designed for this purpose and Microsoft itself discourages using them besides in event handlers, we really wanted to support them for a couple of reasons:</p>
-
-<ol>
-<li>Not supporting them would mean that NUnit would throw an exception at runtime every time a test is written with an async void signature</li>
-<li>Most users would probably repeatedly commit the same mistake of writing asynchronous test methods as void async because no one really cares about their return value</li>
-</ol>
-
-
-<p>We thought that the two reasons above would lead to a frustrating user experience and decided to support async void tests as well as Task-returning ones. This choice came with some drawbacks too:</p>
-
-<ol>
-<li>The ways async void methods interact with the SynchronizationContext in which they run is undocumented and might change in the future, which opens up the possibility of breaking NUnit&rsquo;s implementation</li>
-<li>Switching the SynchronizationContext in which the test method runs (the way NUnit supports async void tests, that is) might affect even up to a great extent the flow of the code wrapped by the new SynchronizationContext</li>
-</ol>
-
-
-<p>We though that these two issues alone did not justify the poor user experience and we opted to fully support async void tests.</p>
-
-<h4>If not void, what?</h4>
-
-<p>Now, although it seems quite reasonable to write the above asynchronous test as one returning void it is equally valid to write it so that it returns a Task instead.</p>
-
-<p><figure class='code'><figcaption><span>A simple async test returning Task  (nunit-simple-async-task-test.cs)</span> <a href='/downloads/code/nunit-simple-async-task-test.cs'>download</a></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">OneSimpleTest</span><span class="p">()</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">eightBall</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EightBall</span><span class="p">();</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">answer</span> <span class="p">=</span> <span class="k">await</span> <span class="n">eightBall</span><span class="p">.</span><span class="n">ShouldIChangeJob</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">Is</span><span class="p">.</span><span class="n">True</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<p>It is actually more advisable to do so if you are especially interested about forwards compatibility of your code for the reasons explained above. If you do this NUnit will not have to jump through hoops to run it correctly and will simply fall back to waiting on the returned task.</p>
-
-<h3>async, where else</h3>
-
-<p>As briefly mentioned earlier support for await/async in NUnit 2 goes beyond test methods. The good thing about it is that in most cases you won&rsquo;t have to think about whether it is supported or not, because it most likely is.</p>
-
-<p>In any case here&rsquo;s a by-no-means complete overview of places where we had to do some relevant work.</p>
-
-<h4>Test cases checking results via Task return values</h4>
-
-<p>Methods marked with TestCaseAttribute can return values, which are then checked against the Result property of the test case. They now support returning result asynchronously:</p>
-
-<p><figure class='code'><figcaption><span>An async test case returning Task&lt;int&gt;  (nunit-async-testcase.cs)</span> <a href='/downloads/code/nunit-async-testcase.cs'>download</a></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[TestCase(1, 2, Result = 3)]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">TestAddAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="k">await</span> <span class="nf">SumAsync</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>	
-</span><span class='line'>
-</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">SumAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>	<span class="k">return</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="p">+</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<h4>Async lambdas</h4>
-
-<p>The async support went slightly beyond test methods, and extended to framework features which accept lambda expression as their arguments:</p>
-
-<p><figure class='code'><figcaption><span>Async lambda support in NUnit framework  (async-lambda-support.cs)</span> <a href='/downloads/code/async-lambda-support.cs'>download</a></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="na">[Test]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">AsyncLambaSupport</span><span class="p">()</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="c1">// throwing asynchronously</span>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">await</span> <span class="n">ThrowAsync</span><span class="p">(),</span> <span class="n">Throws</span><span class="p">.</span><span class="n">TypeOf</span><span class="p">&lt;</span><span class="n">InvalidOperationException</span><span class="p">&gt;());</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// returning values asynchronously</span>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">await</span> <span class="n">ReturnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="m">1</span><span class="p">));</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// &quot;After&quot; works with async methods too</span>
-</span><span class='line'>    <span class="n">Assert</span><span class="p">.</span><span class="n">That</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">await</span> <span class="n">ResutnOneAsync</span><span class="p">(),</span> <span class="n">Is</span><span class="p">.</span><span class="n">EqualTo</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">After</span><span class="p">(</span><span class="m">100</span><span class="p">));</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<p>Framework support is not yet available in NUnit 2.6.2, it will be in the next build.</p>
-
-<h4>Test context availability</h4>
-
-<p>If you don&rsquo;t know about <a href="http://nunit.org/index.php?p=testContext&amp;r=2.6.2">TestContext</a> I suggest you check it out as it might come handy in a bunch of scenarios. If you&rsquo;re already using it, just be aware that it is now accessible anywhere inside the body of asynchronous tests, which is how you would expect it to be.</p>
-
-<h3>What else?</h3>
-
-<p>This feature has been ported to the upcoming major release 3.0 of NUnit as well as to NUnitLite to make it available consistently throughout the whole testing platform.</p>
-
-<p>If there&rsquo;s anything we&rsquo;ve missed feel free to let us know on the NUnit&rsquo;s <a href="http://groups.google.com/group/nunit-discuss">mailing list</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1089,6 +978,10 @@ What does it mean exactly? Well, it means that there is no Task on which to call
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/04/07/labeling-trees-exercise-1/">Labeling Trees - Exercise 1</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/03/31/labeling-trees-invisible-state/">Labeling Trees - Invisible state</a>
       </li>
     
@@ -1102,10 +995,6 @@ What does it mean exactly? Well, it means that there is no Task on which to call
     
       <li class="post">
         <a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, present and future of .NET assembly merging</a>
       </li>
     
   </ul>

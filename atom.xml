@@ -4,7 +4,7 @@
   <title><![CDATA[simoneb's blog]]></title>
   <link href="http://simoneb.github.com/atom.xml" rel="self"/>
   <link href="http://simoneb.github.com/"/>
-  <updated>2013-03-31T01:56:12+01:00</updated>
+  <updated>2013-04-07T22:29:18+02:00</updated>
   <id>http://simoneb.github.com/</id>
   <author>
     <name><![CDATA[Simone Busoli]]></name>
@@ -12,6 +12,123 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Labeling Trees - Exercise 1]]></title>
+    <link href="http://simoneb.github.com/blog/2013/04/07/labeling-trees-exercise-1/"/>
+    <updated>2013-04-07T19:41:00+02:00</updated>
+    <id>http://simoneb.github.com/blog/2013/04/07/labeling-trees-exercise-1</id>
+    <content type="html"><![CDATA[<p>In the <a href="http://simoneb.github.com/blog/2013/03/31/labeling-trees-invisible-state">last post</a> of this series we learned how to label a binary tree monadically, and in doing so we discovered the state monad. I&#8217;ve collected the pieces we built incrementally last time into <a href="https://gist.github.com/simoneb/5332234/7beedb523a5c8ed2c72142000c881b3b3a890703">this gist</a> containing the whole monadic label implementation as a <a href="http://www.linqpad.net">LINQPad</a> query that you can simply copy and run. I&#8217;ll keep making changes to that gist and create links which point to specific revisions from now on.</p>
+
+<p>As I mentioned in the <a href="http://simoneb.github.com/blog/2013/03/17/labeling-trees-introduction">introduction</a> I decided to write this series as a result of watching some years ago Brian Beckman talking about monads and not being able to grasp the topic at that time. Going through it again and explaining what it took me to understand it will hopefully help someone else follow the same path. Up until now we&#8217;ve rediscovered what Brian explained in his interviews, but the accompanying source code (that I&#8217;ve copied in <a href="https://gist.github.com/simoneb/627a349a1632307c301b">this gist</a> for convenience) also gave 10 assignments to the reader - without solutions - which I&#8217;m going to tackle in the remainder of this series.</p>
+
+<p>The exercises are of varying difficulties, basically expanding on the topic of the state monad with tasks which require generalizing the pattern and applying it to solve problems other than labeling binary trees. So, without further ado, let&#8217;s move on to the first exercise.</p>
+
+<h3>Exercise 1</h3>
+
+<blockquote><p>generalize over the type of the state, from int
+to &lt;TState>, say, so that the S type can handle any kind of
+state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
+&#8220;label-content pair&#8221; to &#8220;state-content pair&#8221;.</p></blockquote>
+
+<p>I rephrased the original text of the exercise a little bit so it matches our own implementation rather than Brian&#8217;s. Some type names are different as well as some design choices, but the overall concept is the same. Let&#8217;s see what this exercise is about.</p>
+
+<p>So far we used a <code>Labeled&lt;T&gt;</code> class to represent the contents of a labeled tree - leaves, specifically. This class is a simple container of label and value pairs, where only the latter is generically parameterized via the <code>T</code> generic parameter. This exercise requires to parameterize the type of the label/state too, which is currently fixed to be an integer.  It doesn&#8217;t sound very difficult, does it? We simply come up with a new type <code>StateContent&lt;TState, T&gt;</code> which does just that, and then adapt the usages of <code>Labeled&lt;T&gt;</code> to match the new type, as shown in this diff.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gu">@@ -59,10 +59,10 @@ public class Branch&lt;T&gt; : Tree&lt;T&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public class Labeled&lt;T&gt;</span>
+</span><span class='line'><span class="gi">+public class StateContent&lt;TState, T&gt;</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    public int Label { get; private set; }</span>
+</span><span class='line'><span class="gi">+    public TState State { get; private set; }</span>
+</span><span class='line'>     public T Value { get; private set; }
+</span><span class='line'>
+</span><span class='line'><span class="gd">-    public Labeled(int label, T value)</span>
+</span><span class='line'><span class="gi">+    public StateContent(TState state, T value)</span>
+</span><span class='line'>     {
+</span><span class='line'><span class="gd">-        Label = label;</span>
+</span><span class='line'><span class="gi">+        State = state;</span>
+</span><span class='line'>         Value = value;
+</span><span class='line'><span class="gu">@@ -72,3 +72,3 @@ public class Labeled&lt;T&gt;</span>
+</span><span class='line'>     {
+</span><span class='line'><span class="gd">-        return new { Label, Value }.ToString();</span>
+</span><span class='line'><span class="gi">+        return new { State, Value }.ToString();</span>
+</span><span class='line'>     }
+</span><span class='line'><span class="gu">@@ -86,5 +86,5 @@ public Tree&lt;T&gt; branch&lt;T&gt;(Tree&lt;T&gt; left, Tree&lt;T&gt; right)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public Labeled&lt;T&gt; labeled&lt;T&gt;(int label, T value)</span>
+</span><span class='line'><span class="gi">+public StateContent&lt;TState, T&gt; stateContent&lt;TState, T&gt;(TState state, T value)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    return new Labeled&lt;T&gt;(label, value);</span>
+</span><span class='line'><span class="gi">+    return new StateContent&lt;TState, T&gt;(state, value);</span>
+</span><span class='line'> }
+</span><span class='line'><span class="gu">@@ -117,3 +117,3 @@ public static S&lt;T&gt; Return&lt;T&gt;(T value)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public Tree&lt;Labeled&lt;T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'><span class="gi">+public Tree&lt;StateContent&lt;int, T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gu">@@ -122,3 +122,3 @@ public Tree&lt;Labeled&lt;T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'><span class="gi">+public S&lt;Tree&lt;StateContent&lt;int, T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gu">@@ -134,3 +134,3 @@ public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'>         return Bind(updateState,
+</span><span class='line'><span class="gd">-                    label =&gt; Return(leaf(labeled(label, lf.Value))));</span>
+</span><span class='line'><span class="gi">+                    label =&gt; Return(leaf(stateContent(label, lf.Value))));</span>
+</span><span class='line'>     }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It was an easy one this time, which sets the foundation for the next exercise, but we&#8217;ll come to it in the next post. The source code after this change is in the same old gist at <a href="https://gist.github.com/simoneb/5332234/632617aa38af3bbce179bd3891c1ffc660881e92">this revision</a>.</p>
+
+<p>Stay tuned!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Labeling Trees - Invisible state]]></title>
