@@ -4,7 +4,7 @@
   <title><![CDATA[simoneb's blog]]></title>
   <link href="http://simoneb.github.com/atom.xml" rel="self"/>
   <link href="http://simoneb.github.com/"/>
-  <updated>2013-04-21T00:45:06+02:00</updated>
+  <updated>2013-04-21T00:47:13+02:00</updated>
   <id>http://simoneb.github.com/</id>
   <author>
     <name><![CDATA[Simone Busoli]]></name>
@@ -289,7 +289,7 @@ This leads exactly to the solution we&#8217;re looking for.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>The <a href="https://gist.github.com/simoneb/5332234/51fcfafaa8bf911d70cb50978d06a29d8e1492db">full source code</a> is as usual available as gist containing a LINQPad query that you can download an run right away.<br/>
+<p>The <a href="https://gist.github.com/simoneb/5332234/51fcfafaa8bf911d70cb50978d06a29d8e1492db">full source code</a> is as usual available as a gist containing a LINQPad query that you can download an run right away.
 In the next post we&#8217;ll do a step forward in defining a self-contained monad type before moving on to more interesting and challenging exercises.</p>
 ]]></content>
   </entry>
