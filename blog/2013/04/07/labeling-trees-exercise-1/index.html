@@ -120,7 +120,9 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
 
 <p>I rephrased the original text of the exercise a little bit so it matches our own implementation rather than Brian&#8217;s. Some type names are different as well as some design choices, but the overall concept is the same. Let&#8217;s see what this exercise is about.</p>
 
-<p>So far we used a <code>Labeled&lt;T&gt;</code> class to represent the contents of a labeled tree - leaves, specifically. This class is a simple container of label and value pairs, where only the latter is generically parameterized via the <code>T</code> generic parameter. This exercise requires to parameterize the type of the label/state too, which is currently fixed to be an integer.  It doesn&#8217;t sound very difficult, does it? We simply come up with a new type <code>StateContent&lt;TState, T&gt;</code> which does just that, and then adapt the usages of <code>Labeled&lt;T&gt;</code> to match the new type, as shown in this diff.</p>
+<p>So far we used a <code>Labeled&lt;T&gt;</code> class to represent the contents of a labeled tree - leaves, specifically. This class is a simple container of label and value pairs, where only the latter is generically parameterized via the <code>T</code> generic parameter. This exercise requires to parameterize the type of the label/state too, which is currently fixed to be an integer.  It doesn&#8217;t sound very difficult, does it? We simply come up with a new type <code>StateContent&lt;TState, T&gt;</code> which does just that, and then adapt the usages of <code>Labeled&lt;T&gt;</code> to match the new type.</p>
+
+<p>In addition to that we&#8217;ll also have to make some changes to the <code>S&lt;T&gt;</code> class, because it&#8217;s hardcoding the type of the state to be an integer. This will in turn require some changes to the <code>MLabel1</code> function, mainly to cope with limited type inference capabilities of the C# compiler. The end result is shown in the diff below.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -165,6 +167,43 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
 <span class='line-number'>41</span>
 <span class='line-number'>42</span>
 <span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
 </pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gu">@@ -59,10 +59,10 @@ public class Branch&lt;T&gt; : Tree&lt;T&gt;</span>
 </span><span class='line'>
 </span><span class='line'><span class="gd">-public class Labeled&lt;T&gt;</span>
@@ -185,7 +224,7 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
 </span><span class='line'><span class="gd">-        return new { Label, Value }.ToString();</span>
 </span><span class='line'><span class="gi">+        return new { State, Value }.ToString();</span>
 </span><span class='line'>     }
-</span><span class='line'><span class="gu">@@ -86,5 +86,5 @@ public Tree&lt;T&gt; branch&lt;T&gt;(Tree&lt;T&gt; left, Tree&lt;T&gt; right)</span>
+</span><span class='line'><span class="gu">@@ -86,15 +86,15 @@ public Tree&lt;T&gt; branch&lt;T&gt;(Tree&lt;T&gt; left, Tree&lt;T&gt; right)</span>
 </span><span class='line'>
 </span><span class='line'><span class="gd">-public Labeled&lt;T&gt; labeled&lt;T&gt;(int label, T value)</span>
 </span><span class='line'><span class="gi">+public StateContent&lt;TState, T&gt; stateContent&lt;TState, T&gt;(TState state, T value)</span>
@@ -193,6 +232,33 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
 </span><span class='line'><span class="gd">-    return new Labeled&lt;T&gt;(label, value);</span>
 </span><span class='line'><span class="gi">+    return new StateContent&lt;TState, T&gt;(state, value);</span>
 </span><span class='line'> }
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public class S&lt;T&gt;</span>
+</span><span class='line'><span class="gi">+public class S&lt;TState, T&gt;</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    public Func&lt;int, Tuple&lt;int, T&gt;&gt; RunWithState;</span>
+</span><span class='line'><span class="gi">+    public Func&lt;TState, Tuple&lt;TState, T&gt;&gt; RunWithState;</span>
+</span><span class='line'> }
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public static S&lt;U&gt; Bind&lt;T, U&gt;(S&lt;T&gt; m, Func&lt;T, S&lt;U&gt;&gt; k)</span>
+</span><span class='line'><span class="gi">+public static S&lt;TState, U&gt; Bind&lt;TState, T, U&gt;(S&lt;TState, T&gt; m, Func&lt;T, S&lt;TState, U&gt;&gt; k)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    return new S&lt;U&gt; </span>
+</span><span class='line'><span class="gi">+    return new S&lt;TState, U&gt; </span>
+</span><span class='line'>     {
+</span><span class='line'><span class="gu">@@ -102,3 +102,3 @@ public static S&lt;U&gt; Bind&lt;T, U&gt;(S&lt;T&gt; m, Func&lt;T, S&lt;U&gt;&gt; k)</span>
+</span><span class='line'>         {
+</span><span class='line'><span class="gd">-            Tuple&lt;int, T&gt; mResult = m.RunWithState(s0);</span>
+</span><span class='line'><span class="gi">+            Tuple&lt;TState, T&gt; mResult = m.RunWithState(s0);</span>
+</span><span class='line'>
+</span><span class='line'><span class="gu">@@ -109,5 +109,5 @@ public static S&lt;U&gt; Bind&lt;T, U&gt;(S&lt;T&gt; m, Func&lt;T, S&lt;U&gt;&gt; k)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-public static S&lt;T&gt; Return&lt;T&gt;(T value)</span>
+</span><span class='line'><span class="gi">+public static S&lt;TState, T&gt; Return&lt;TState, T&gt;(T value)</span>
+</span><span class='line'> {
+</span><span class='line'><span class="gd">-    return new S&lt;T&gt; </span>
+</span><span class='line'><span class="gi">+    return new S&lt;TState, T&gt; </span>
+</span><span class='line'>     {
 </span><span class='line'><span class="gu">@@ -117,3 +117,3 @@ public static S&lt;T&gt; Return&lt;T&gt;(T value)</span>
 </span><span class='line'>
 </span><span class='line'><span class="gd">-public Tree&lt;Labeled&lt;T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
@@ -201,17 +267,27 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
 </span><span class='line'><span class="gu">@@ -122,3 +122,3 @@ public Tree&lt;Labeled&lt;T&gt;&gt; MLabel&lt;T&gt;(Tree&lt;T&gt; tree)</span>
 </span><span class='line'>
 </span><span class='line'><span class="gd">-public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
-</span><span class='line'><span class="gi">+public S&lt;Tree&lt;StateContent&lt;int, T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'><span class="gi">+public S&lt;int, Tree&lt;StateContent&lt;int, T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
 </span><span class='line'> {
+</span><span class='line'><span class="gu">@@ -128,3 +128,3 @@ public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'>
+</span><span class='line'><span class="gd">-        var updateState = new S&lt;int&gt; </span>
+</span><span class='line'><span class="gi">+        var updateState = new S&lt;int, int&gt; </span>
+</span><span class='line'>         {
 </span><span class='line'><span class="gu">@@ -134,3 +134,3 @@ public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
 </span><span class='line'>         return Bind(updateState,
 </span><span class='line'><span class="gd">-                    label =&gt; Return(leaf(labeled(label, lf.Value))));</span>
-</span><span class='line'><span class="gi">+                    label =&gt; Return(leaf(stateContent(label, lf.Value))));</span>
+</span><span class='line'><span class="gi">+                    label =&gt; Return&lt;int, Tree&lt;StateContent&lt;int, T&gt;&gt;&gt;(leaf(stateContent(label, lf.Value))));</span>
+</span><span class='line'>     }
+</span><span class='line'><span class="gu">@@ -142,3 +142,3 @@ public S&lt;Tree&lt;Labeled&lt;T&gt;&gt;&gt; MLabel1&lt;T&gt;(Tree&lt;T&gt; tree)</span>
+</span><span class='line'>                     left =&gt; Bind(MLabel1(br.Right),
+</span><span class='line'><span class="gd">-                                 right =&gt; Return(branch(left, right))));</span>
+</span><span class='line'><span class="gi">+                                 right =&gt; Return&lt;int, Tree&lt;StateContent&lt;int, T&gt;&gt;&gt;(branch(left, right))));</span>
 </span><span class='line'>     }
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>It was an easy one this time, which sets the foundation for the next exercise, but we&#8217;ll come to it in the next post. The source code after this change is in the same old gist at <a href="https://gist.github.com/simoneb/5332234/632617aa38af3bbce179bd3891c1ffc660881e92">this revision</a>.</p>
+<p>It was an easy one this time, which sets the foundation for the next exercise, but we&#8217;ll come to it in the next post. The source code after this change is in the same old gist at <a href="https://gist.github.com/simoneb/5332234/b8e4d6afc501ff4dd74de6b9e7e8c2d5548e81b4">this revision</a>.</p>
 
 <p>Stay tuned!</p>
 </div>
@@ -256,6 +332,8 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
         <a class="basic-alignment left" href="/blog/2013/03/31/labeling-trees-invisible-state/" title="Previous Post: Labeling Trees - Invisible state">&laquo; Labeling Trees - Invisible state</a>
       
       
+        <a class="basic-alignment right" href="/blog/2013/04/13/labeling-trees-exercise-2/" title="Next Post: Labeling Trees - Exercise 2">Labeling Trees - Exercise 2 &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -292,6 +370,10 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/04/13/labeling-trees-exercise-2/">Labeling Trees - Exercise 2</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/04/07/labeling-trees-exercise-1/">Labeling Trees - Exercise 1</a>
       </li>
     
@@ -305,10 +387,6 @@ state object. Start with Labeled&lt;T> &#8211;> StateContent&lt;TState, T>, from
     
       <li class="post">
         <a href="/blog/2013/01/19/async-support-in-nunit/">Async support in NUnit</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a>
       </li>
     
   </ul>

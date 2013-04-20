@@ -1,0 +1,566 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Labeling Trees - Exercise 2 - simoneb's blog</title>
+  <meta name="author" content="Simone Busoli">
+
+  
+  <meta name="description" content="In the previous post of this series we did a small improvement to the state monad implementation by generalizing it over the type of the state.
+This &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://simoneb.github.com/blog/2013/04/13/labeling-trees-exercise-2">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/simoneb" rel="alternate" title="simoneb's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-27143372-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">simoneb's blog</a></h1>
+  
+    <h2>about design, development, profession and avoidance of fluff</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="http://feeds.feedburner.com/simoneb" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:simoneb.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <!--li><a href="/">Home</a></li-->
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/about">About</a></li>
+  <!--li><a href="/blog/archives">Archives</a></li-->
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Labeling Trees - Exercise 2</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-13T01:28:00+02:00" pubdate data-updated="true">Apr 13<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>In the <a href="/blog/2013/04/07/labeling-trees-exercise-1">previous post</a> of this series we did a small improvement to the state monad implementation by generalizing it over the type of the state.
+This is not exactly a requirement for labeling trees as the state can be simply an integer, but it&#8217;s a more natural choice now that we tackle the second exercise.</p>
+
+<blockquote><p>Go from labeling a tree to doing a constrained
+container computation, as in WPF. Give everything a
+bounding box, and size subtrees to fit inside their
+parents, recursively.</p></blockquote>
+
+<p>As you know the exercises come without any solution, so let&#8217;s try to understand what we need to do here.
+Because we&#8217;re talking about binary trees let&#8217;s assume that the requirement is to perform the constrained container computation based on containers with two children,
+where each child can either be another container or a terminal element, like a text block.</p>
+
+<p>By translating it to WPF as suggested in the assignment we can represent a branch as a <code>Grid</code> with two rows and a single column.
+Each row&#8217;s unique cell can contain either another grid with the same characteristics or a <code>TextBlock</code>.
+The layout features of a grid match exactly the solution to the problem we&#8217;re asked to solve, as child elements of grid cells expand to match the size of their parent.</p>
+
+<p>Starting with the same simple tree we used as a sample throughout the series:</p>
+
+<figure class='code'><figcaption><span>A simple tree  (a-simple-tree.cs)</span> <a href='/downloads/code/monads/a-simple-tree.cs'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'>                                <span class="c1">//  tree.Show() outputs:</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">branch</span><span class="p">(</span>              <span class="c1">//  Branch:</span>
+</span><span class='line'>            <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">),</span>          <span class="c1">//    Leaf: a</span>
+</span><span class='line'>            <span class="n">branch</span><span class="p">(</span>             <span class="c1">//    Branch:</span>
+</span><span class='line'>              <span class="n">branch</span><span class="p">(</span>           <span class="c1">//      Branch:</span>
+</span><span class='line'>                <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;b&quot;</span><span class="p">),</span>      <span class="c1">//        Leaf: b</span>
+</span><span class='line'>                <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;c&quot;</span><span class="p">)),</span>     <span class="c1">//        Leaf: c</span>
+</span><span class='line'>              <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;d&quot;</span><span class="p">)));</span>      <span class="c1">//      Leaf: d</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">tree</span><span class="p">.</span><span class="n">Show</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>we can transform it into this simple WPF markup, as described earlier:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;Grid&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;TextBlock</span> <span class="na">Grid.Row=</span><span class="s">&quot;0&quot;</span><span class="nt">&gt;</span>a<span class="nt">&lt;/TextBlock&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;Grid</span> <span class="na">Grid.Row=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;Grid</span> <span class="na">Grid.Row=</span><span class="s">&quot;0&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+</span><span class='line'>                <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+</span><span class='line'>                <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;TextBlock</span> <span class="na">Grid.Row=</span><span class="s">&quot;0&quot;</span><span class="nt">&gt;</span>b<span class="nt">&lt;/TextBlock&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;TextBlock</span> <span class="na">Grid.Row=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>c<span class="nt">&lt;/TextBlock&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/Grid&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;TextBlock</span> <span class="na">Grid.Row=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>d<span class="nt">&lt;/TextBlock&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/Grid&gt;</span>
+</span><span class='line'><span class="nt">&lt;/Grid&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The result of this markup, along with some additional styling and a bit of logic to outline the bounds of each cell and display its box size, is shown below.
+The full code of this example is available as a ready-to-run LINQPad query <a href="http://share.linqpad.net/f2d3sg.linq">here</a>.</p>
+
+<p><img class="center" src="/downloads/images/wpf_grid.png" title="WPF grid sample" ></p>
+
+<p>As you can see the children of grid cells automatically expand to fit their parent&#8217;s size.
+More precisely, each grid row gets 50% of the height of its parent, regardless of the contents.
+We&#8217;ll now try to do the same monadically by adapting our data structures and labeling logic to this new case.</p>
+
+<p>First of all we need to decide what is the type of the state we&#8217;ll be carrying around.
+Intuitively, each time we branch a grid into its two rows we allocate 50% of the available height to each of them, therefore the state will certainly include the available height.
+Although not strictly needed in this scenario let&#8217;s make it a little more realistic by including the width as well, and we&#8217;ll call a structure containing two such values a <code>Box</code>.
+With this little piece of information we can already define the signature of our function which, similarly to the previous <code>MLabel</code>, will represent the entry point for the constrained box computation.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="n">Tree</span><span class="p">&lt;</span><span class="n">StateContent</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">MConstrainedBox</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">,</span> <span class="n">Box</span> <span class="n">box</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The function takes a tree, which in this case we can imagine being a visual tree of graphic elements, and an initial box size (our initial state), representing the size of the root element.
+The return value is a tree whose generic argument is a tuple of state-content values.
+The state is the <code>Box</code> representing the size allocated to that tree and the value is the generic parameter <code>T</code> that we&#8217;re currently filling with characters to distinguish a leaf from another leaf.</p>
+
+<p>As we did with the labeling problem the entry function will finally delegate to a helper function that will call itself recursively. We can thus define the body of the previous function as follows:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="n">Tree</span><span class="p">&lt;</span><span class="n">StateContent</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">MConstrainedBox</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">,</span> <span class="n">Box</span> <span class="n">box</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">MConstrainedBox1</span><span class="p">(</span><span class="n">tree</span><span class="p">).</span><span class="n">RunWithState</span><span class="p">(</span><span class="n">box</span><span class="p">).</span><span class="n">Item2</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>No big surprises here as the juice is actually in the body of the <code>MConstrainedBox1</code> function, in the same way as it previously was in <code>MLabel1</code>. Let&#8217;s start by defining its signature, which we can infer from above.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="n">S</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">StateContent</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;&gt;</span> <span class="n">MConstrainedBox1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Not much else to do except reasoning about how to solve the problem of assigning box sizes to tree leaves according to the rules described earlier. The process is overall simple, let&#8217;s outline the steps.</p>
+
+<p>If the current tree is a <em>leaf</em> then extract the state value using a proper <code>getState</code> function similar to what we used in the labeling scenario. The main difference here is that when we encounter leaves we do not need to update any state but only extract it from the monad and attach it to the new leaf we create.</p>
+
+<p>If the current tree is a <em>branch</em> then:</p>
+
+<ol>
+<li>update the state by halving the height of the current box</li>
+<li>recurse over the left branch</li>
+<li>recurse over the right branch</li>
+<li>update the state by doubling the height of the current box</li>
+<li>return an instance of the state monad whose value is a branch with the results of steps 2 and 3 as the left and right trees, respectively</li>
+</ol>
+
+
+<p>Let&#8217;s go through a simple example to understand better.
+Assuming to start with a box of size 200 x 400 (W x H) and that the root element of the tree we want to process is a branch,
+we halve the available height and process the left and right trees using 200 as the available height for each of them.
+If at some point we come across a leaf we use whatever current value of the state we have at that point during the computation
+(if both left and right trees are leaves then each of them will get a height of 200). When we&#8217;re done with the two trees we restore the original height by multiplying it by two.
+This leads exactly to the solution we&#8217;re looking for.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">StateContent</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;&gt;</span> <span class="n">MConstrainedBox1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Tree</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">tree</span> <span class="k">is</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">lf</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Leaf</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">getState</span> <span class="p">=</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Box</span><span class="p">&gt;</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">b0</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">b0</span><span class="p">,</span> <span class="n">b0</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">getState</span><span class="p">,</span> <span class="n">b0</span> <span class="p">=&gt;</span>
+</span><span class='line'>                    <span class="n">Return</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">StateContent</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;&gt;(</span><span class="n">leaf</span><span class="p">(</span><span class="n">stateContent</span><span class="p">(</span><span class="n">b0</span><span class="p">,</span> <span class="n">lf</span><span class="p">.</span><span class="n">Value</span><span class="p">))));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">br</span> <span class="p">=</span> <span class="n">tree</span> <span class="k">as</span> <span class="n">Branch</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">halveHeight</span> <span class="p">=</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Box</span><span class="p">&gt;</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">b0</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="k">new</span> <span class="n">Box</span><span class="p">(</span><span class="n">b0</span><span class="p">.</span><span class="n">Width</span><span class="p">,</span> <span class="n">b0</span><span class="p">.</span><span class="n">Height</span><span class="p">/</span><span class="m">2</span><span class="p">),</span> <span class="n">b0</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">doubleHeight</span> <span class="p">=</span> <span class="k">new</span> <span class="n">S</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Box</span><span class="p">&gt;</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">RunWithState</span> <span class="p">=</span> <span class="n">b0</span> <span class="p">=&gt;</span> <span class="n">Tuple</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="k">new</span> <span class="n">Box</span><span class="p">(</span><span class="n">b0</span><span class="p">.</span><span class="n">Width</span><span class="p">,</span> <span class="n">b0</span><span class="p">.</span><span class="n">Height</span><span class="p">*</span><span class="m">2</span><span class="p">),</span> <span class="n">b0</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">Bind</span><span class="p">(</span><span class="n">halveHeight</span><span class="p">,</span> <span class="n">_</span> <span class="p">=&gt;</span> <span class="n">Bind</span><span class="p">(</span><span class="n">MConstrainedBox1</span><span class="p">(</span><span class="n">br</span><span class="p">.</span><span class="n">Left</span><span class="p">),</span>
+</span><span class='line'>                    <span class="n">left</span> <span class="p">=&gt;</span> <span class="n">Bind</span><span class="p">(</span><span class="n">MConstrainedBox1</span><span class="p">(</span><span class="n">br</span><span class="p">.</span><span class="n">Right</span><span class="p">),</span>
+</span><span class='line'>                    <span class="n">right</span> <span class="p">=&gt;</span> <span class="n">Bind</span><span class="p">(</span><span class="n">doubleHeight</span><span class="p">,</span>  <span class="n">__</span> <span class="p">=&gt;</span>
+</span><span class='line'>                    <span class="n">Return</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">Tree</span><span class="p">&lt;</span><span class="n">StateContent</span><span class="p">&lt;</span><span class="n">Box</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;&gt;&gt;(</span><span class="n">branch</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">))))));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now if we run the computation against the same old tree:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">branch</span><span class="p">(</span>
+</span><span class='line'>               <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">),</span>
+</span><span class='line'>               <span class="n">branch</span><span class="p">(</span>
+</span><span class='line'>                   <span class="n">branch</span><span class="p">(</span>
+</span><span class='line'>                       <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;b&quot;</span><span class="p">),</span>
+</span><span class='line'>                       <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;c&quot;</span><span class="p">)),</span>
+</span><span class='line'>                   <span class="n">leaf</span><span class="p">(</span><span class="s">&quot;d&quot;</span><span class="p">)));</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">MConstrainedBox</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="k">new</span> <span class="n">Box</span><span class="p">(</span><span class="m">200</span><span class="p">,</span> <span class="m">400</span><span class="p">)).</span><span class="n">Show</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>the result we obtain is the same we obtained using WPF:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="n">Branch</span><span class="p">:</span>
+</span><span class='line'>  <span class="n">Leaf</span><span class="p">:</span> <span class="p">{</span> <span class="n">State</span> <span class="p">=</span> <span class="p">{</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span> <span class="n">Height</span> <span class="p">=</span> <span class="m">200</span> <span class="p">},</span> <span class="n">Value</span> <span class="p">=</span> <span class="n">a</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">Branch</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">Branch</span><span class="p">:</span>
+</span><span class='line'>      <span class="n">Leaf</span><span class="p">:</span> <span class="p">{</span> <span class="n">State</span> <span class="p">=</span> <span class="p">{</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span> <span class="n">Height</span> <span class="p">=</span> <span class="m">50</span> <span class="p">},</span> <span class="n">Value</span> <span class="p">=</span> <span class="n">b</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">Leaf</span><span class="p">:</span> <span class="p">{</span> <span class="n">State</span> <span class="p">=</span> <span class="p">{</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span> <span class="n">Height</span> <span class="p">=</span> <span class="m">50</span> <span class="p">},</span> <span class="n">Value</span> <span class="p">=</span> <span class="n">c</span> <span class="p">}</span>
+</span><span class='line'>    <span class="n">Leaf</span><span class="p">:</span> <span class="p">{</span> <span class="n">State</span> <span class="p">=</span> <span class="p">{</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span> <span class="n">Height</span> <span class="p">=</span> <span class="m">100</span> <span class="p">},</span> <span class="n">Value</span> <span class="p">=</span> <span class="n">d</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <a href="https://gist.github.com/simoneb/5332234/51fcfafaa8bf911d70cb50978d06a29d8e1492db">full source code</a> is as usual available as gist containing a LINQPad query that you can download an run right away.<br/>
+In the next post we&#8217;ll do a step forward in defining a self-contained monad type before moving on to more interesting and challenging exercises.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Simone Busoli</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-13T01:28:00+02:00" pubdate data-updated="true">Apr 13<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://simoneb.github.com/blog/2013/04/13/labeling-trees-exercise-2/" data-via="simonebu" data-counturl="http://simoneb.github.com/blog/2013/04/13/labeling-trees-exercise-2/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/07/labeling-trees-exercise-1/" title="Previous Post: Labeling Trees - Exercise 1">&laquo; Labeling Trees - Exercise 1</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About me</h1>
+  <p>
+	<strong>Simone Busoli</strong>
+	<br/>
+	creative software engineer
+  </p>
+<!-- AddThis Follow BEGIN -->
+<div class="addthis_toolbox addthis_32x32_style addthis_default_style">
+<a class="addthis_button_twitter_follow" addthis:userid="simonebu"></a>
+<a class="addthis_button_linkedin_follow" addthis:userid="simonebusoli"></a>
+<a class="addthis_button_rss_follow" addthis:userid="http://feeds.feedburner.com/simoneb"></a>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5143bd0a20061164"></script>
+<!-- AddThis Follow END -->
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/04/13/labeling-trees-exercise-2/">Labeling Trees - Exercise 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/07/labeling-trees-exercise-1/">Labeling Trees - Exercise 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/31/labeling-trees-invisible-state/">Labeling Trees - Invisible state</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/17/labeling-trees-introduction/">Labeling Trees - Introduction</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/19/async-support-in-nunit/">Async support in NUnit</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/simoneb">@simoneb</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'simoneb',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Simone Busoli -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'simoneb';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://simoneb.github.com/blog/2013/04/13/labeling-trees-exercise-2/';
+        var disqus_url = 'http://simoneb.github.com/blog/2013/04/13/labeling-trees-exercise-2/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

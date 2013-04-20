@@ -9,7 +9,7 @@
   <meta name="author" content="Simone Busoli">
 
   
-  <meta name="description" content="Today is the&nbsp;Italian Agile Day, happening in Rome. I didn&#8217;t attend mostly because past editions haven&#8217;t been very interesting, with &hellip;">
+  <meta name="description" content="Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -79,6 +79,81 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/21/past-present-and-future-of-net-assembly-merging/">Past, Present and Future of .NET Assembly Merging</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-21T00:00:00+01:00" pubdate data-updated="true">Nov 21<span>st</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Compiling code written for the .NET framework usually produces assemblies in the form of either standalone executables or libraries. These assemblies contain mainly Microsoft Intermediate Language (MSIL) code which is then jitted upon execution.</p>
+<p>It&#8217;s not uncommon for libraries which expose public APIs to rely internally on assemblies provided by third parties that should not end up in the final package. I&#8217;ll take the mocking library NSubstitute as an example.</p>
+<p>There are commonly a couple of reasons why they shouldn&#8217;t.&nbsp;First, the client code does not need to reference them directly as they are only used internally. Back to the mocking framework example, it wouldn&#8217;t make a lot of sense to build a dynamic proxy from scratch as there exist excellent implementations already, like Castle DynamicProxy, which NSubstitute uses.<br />The other reason is to avoid cluttering the release package of the library with dependencies that are of no interest to the end user, thus simplifying the distribution of the library which would then consist of a smaller number of files.</p>
+<p>The aim is thus to&nbsp;embed&nbsp;somehow the dependent assemblies in a single assembly. There has been mainly a single approach to this so far, and it&#8217;s called ILMerge.</p>
+<h3>ILMerge</h3>
+<p><a href="http://research.microsoft.com/en-us/people/mbarnett/ilmerge.aspx">Mike Barnett&#8217;s ILMerge</a> is a free tool which statically links several assemblies into a single output assembly. It runs as a console application and rewrites the IL of the main assembly by embedding the contents of the other assemblies into it. It takes care of a couple of additional things, like strong naming and target framework version, but accepts additional configuration options which allow further customization. One particularly useful is <em>internalization</em> of types, which allows to change the accessibility levels of the types contained in the dependent assemblies, thus effectively hiding them to everyone except the containing assembly.</p>
+<p>One thing to be aware of is that embedding types belonging to one assembly into another assembly makes the first lose its original identity. This can represent either a pro or a con depending on the use case. Serialization and security may not work correctly, as they usually make some use of metadata related to the assembly, which now no longer exists, but also opens up interesting scenarios.</p>
+<p>NSubstitute <em>ILMerges</em>&nbsp;the Castle.Core.dll assembly, which contains the DynamicProxy part. If you were to use NSubstitute in a project where you needed to make use of DynamicProxy directly you would be safe, and could use whatever version of the library you liked, as the runtime would consider the types as belonging to different assemblies and thus not conflicting in any way. The only issue you could encounter is of conflicting namespaces if the assembly wasn&#8217;t merged with its types internalized. Public types would in fact still be visible and you would need to specify some alias to avoid ambiguous references.</p>
+<p>If on the other hand NSubstitute didn&#8217;t merge Castle.Core.dll and distributed it alongside NSubstitute.dll, then you would be somewhat tied to use the version distributed with NSubstitute. Loading different versions of the same assembly in one AppDomain is in fact <a href="http://msdn.microsoft.com/en-us/library/dd153782.aspx#avoid_loading_multiple_versions">discouraged</a> as it can generate all sort of weird behaviors. Also it wouldn&#8217;t be very easy to load two versions of the same assembly because unless the assemblies resided in the GAC you would have to find a way to keep them both on the file system, and assuming you usually load assemblies from the same folder you couldn&#8217;t let two files with the same name stay in the same folder. In this case the version of the assembly ending up in the output folder would depend on the build process, according to the order it chose to resolve dependencies during compilation.</p>
+<p>Another recent and blocking shortcoming of ILMerge has to do with WPF assemblies. These assemblies contain embedded resources which in turn encode the identities of the original containing assembly. As I said merged assemblies loose their identities, therefore these resources would no longer behave correctly. ILMerge would thereby need to extract the resources, patch the encoded assembly identities replacing them with the target assembly identity and re-encode them, something which it is not capable of doing as of now.</p>
+<p>And that&#8217;s from embedded resources that comes another solution.</p>
+<h3>Embedding assemblies as resources</h3>
+<p>Serializing other files into assemblies as resources has always been possible. Resources can then be deserialized at runtime and manipulated. They can be anything, although commonly used for storing media, icons and inanimate data in general. Nothing prevents you from storing assemblies in there, and load them at runtime. This approach has been described thoroughly by Jeffrey Richter in his excellent CLR via C# book, whose relevant excerpt is available <a href="http://blogs.msdn.com/b/microsoft_press/archive/2010/02/03/jeffrey-richter-excerpt-2-from-clr-via-c-third-edition.aspx">here</a>.</p>
+<p>The approach is simple, so simple that ILMerge creator commented:</p>
+<blockquote class="posterous_short_quote">As the author of ILMerge, I think this is fantastic! If I had known about this, I never would have written ILMerge.</blockquote>
+<p>The trick to make it work is to subscribe to the AppDomain&#8217;s AssemblyResolve event. This event is fired when the runtime is unable to locate a referenced assembly, and as a last chance gives the application developer a chance to pick it up according to custom logic. The logic here is to load the assembly from the resources and load it into the application domain.<br />One caveat is that the AssemblyResolve event needs to be subscribed to before any code requiring the embedded assemblies is ever run, which is not always possible. One such case is a .dll, which has not explicit entry point.</p>
+<p>To work around that you have to rely on a feature of the .NET framework which is not exposed to the programming languages directly, called <a href="http://blogs.msdn.com/b/junfeng/archive/2005/11/19/494914.aspx">module initializers</a>. Think of type initializers (aka static constructors), just for modules. In the same way as type initializers are guaranteed to be called before any members in a type are accessed, modules initializers extend this guarantee to the types with an module (assemblies usually contain a single module).</p>
+<p>Placing the AssemblyResolve subscription instructions in a module initializer is thereby either the safest or unique option to inject custom assembly resolution logic, but requires IL manipulation.</p>
+<h3>Costura</h3>
+<p><a href="http://code.google.com/p/costura/">Costura</a> is a neat open source project developed by Simon Cropp which takes care of all the steps described above, and is thereby the suggested way to merge third party assemblies using the embedded resource approach.</p>
+<p>It does so by embedding all referenced assemblies marked as <em>copy local</em> (thus excluding assemblies living in the GAC, for instance) into the main assembly, and then injecting the module initializer code which subscribes to the AppDomain&#8217;s AssemblyResolve event and looks up unresolved assemblies from the embedded resources.</p>
+<p>Costura only requires you to call its custom MSBuild task in the AfterBuild target of the main assembly project.</p>
+<p><figure class='code'><figcaption><span>Costura task  (costura.xml)</span> <a href='/downloads/code/costura.xml'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;UsingTask</span>
+</span><span class='line'>    <span class="na">TaskName=</span><span class="s">&quot;Costura.EmbedTask&quot;</span>
+</span><span class='line'>    <span class="na">AssemblyFile=</span><span class="s">&quot;$(SolutionDir)[path to]\Costura.dll&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">&quot;AfterBuild&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;Costura.EmbedTask</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/Target&gt;</span>
+</span></code></pre></td></tr></table></div></figure></p>
+<p>This approach however comes with its drawbacks too. Most notably it prevents multiple version of the same assembly to be loaded, as in this case the assemblies maintain their identity. This can be dangerous because it could lead to non-determinism in which version of one assembly is loaded. For example, if you distributed a library using this approach and the library client was referencing directly an assembly with the same identity as one of those embedded in your library, which assembly gets loaded in the application domain would depend on the order in which the client code uses your library. If your library is loaded in memory first, then its version of the third party assembly would be loaded in memory, in the other case the client code version of the library would be loaded instead, leading to a fully working application in the best case and to a runtime exception in the worst.</p>
+<p>Both approaches have their pros and cons, but it&#8217;s useful to realize that both exist and know when to apply each.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -172,6 +247,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/04/13/labeling-trees-exercise-2/">Labeling Trees - Exercise 2</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/04/07/labeling-trees-exercise-1/">Labeling Trees - Exercise 1</a>
       </li>
     
@@ -185,10 +264,6 @@
     
       <li class="post">
         <a href="/blog/2013/01/19/async-support-in-nunit/">Async support in NUnit</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/10/28/nunit-via-linqpad/">NUnit via LINQPad</a>
       </li>
     
   </ul>
