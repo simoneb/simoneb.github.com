@@ -1,24 +1,27 @@
 ---
 layout: post
 title: "Labeling Trees - Exercise 2"
-date: 2013-04-13 01:28
+date: 2013-04-21 01:07
 comments: true
 categories: 
 tags: monads
 ---
 
-In the [previous post][previous] of this series we did a small improvement to the state monad implementation by generalizing it over the type of the state. This is not exactly a requirement for labeling trees as the state can be simply an integer, but it's a more natural choice now that we tackle the second exercise.
+In the [previous post][previous] of this series we did a small improvement to the state monad implementation by generalizing it over the type of the state. 
+This is not exactly a requirement for labeling trees as the state can be simply an integer, but it's a more natural choice now that we tackle the second exercise.
 
 > Go from labeling a tree to doing a constrained
 > container computation, as in WPF. Give everything a
 > bounding box, and size subtrees to fit inside their
 > parents, recursively.
 
-As you know the exercises come without any solution, so let's try to understand what we need to do here. Because we're talking about binary trees let's assume that the requirement is to perform the constrained container computation based on containers which have two children, and each child can either be another container or a terminal element, like a text block.
+As you know the exercises come without any solution, so let's try to understand what we need to do here. 
+Because we're talking about binary trees let's assume that the requirement is to perform the constrained container computation based on containers with two children, 
+where each child can either be another container or a terminal element, like a text block.
 
-Translating it to WPF as mentioned in the assignment we can represent it as a `Grid` with two rows and a single column. Each row can contain either another grid with the same characteristics or a `TextBlock`. The layout characteristics of a grid match exactly the solution to the problem we're asked to solve, as child elements of grid cells expand to match the size of their parent.
-
-The analogy with binary trees is therefore straightforward: branches translate to grid cells and leaves translate to the cell's child, for simplicity a block of text.
+By translating it to WPF as suggested in the assignment we can represent a branch as a `Grid` with two rows and a single column. 
+Each row's unique cell can contain either another grid with the same characteristics or a `TextBlock`. 
+The layout features of a grid match exactly the solution to the problem we're asked to solve, as child elements of grid cells expand to match the size of their parent.
 
 Starting with the same simple tree we used as a sample throughout the series:
 
@@ -51,19 +54,27 @@ we can transform it into this simple WPF markup, as described earlier:
 </Grid>
 ```
 
-The result of this markup, along with some additional styling and a bit of code to outline the bounds of each cell and display its box size, is shown below. The full code of this example is available as a runnable LINQPad query [here][WPF example].
+The result of this markup, along with some additional styling and a bit of logic to outline the bounds of each cell and display its box size, is shown below. 
+The full code of this example is available as a ready-to-run LINQPad query [here][WPF example].
 
-{% img center /downloads/images/wpf_grid.png  WPF grid sample %}
+{% img center /images/posts/wpf_grid.png  WPF grid sample %}
 
-As you can see the children of grid cells automatically expand to fit their parent's size. More precisely, each grid row gets 50% of the height of its parent, regardless of the contents. We'll now try to do the same monadically by adapting the data structures and the labeling logic to this new scenario.
+As you can see the children of grid cells automatically expand to fit their parent's size. 
+More precisely, each grid row gets 50% of the height of its parent, regardless of the contents. 
+We'll now try to do the same monadically by adapting our data structures and labeling logic to this new case.
 
-First of all we need to decide what is the type of the state we'll be carrying around. Intuitively, each time we branch a grid into its two rows we allocate 50% of the available height to each of them, therefore the state will certainly include the available height. Although not strictly needed in this scenario let's make it a little more realistic by including the width as well, and we'll call a structure containing two such values a `Box`. With this little piece of information we can already define the signature of our function which, similarly to the previous `MLabel`, will perform (or better, delegate) the constrained box computation.
+First of all we need to decide what is the type of the state we'll be carrying around. 
+Intuitively, each time we branch a grid into its two rows we allocate 50% of the available height to each of them, therefore the state will certainly include the available height. 
+Although not strictly needed in this scenario let's make it a little more realistic by including the width as well, and we'll call a structure containing two such values a `Box`. 
+With this little piece of information we can already define the signature of our function which, similarly to the previous `MLabel`, will represent the entry point for the constrained box computation.
 
 ```csharp
 Tree<StateContent<Box, T>> MConstrainedBox<T>(Tree<T> tree, Box box)
 ```
 
-This function takes a tree, which in this case we can imagine being a visual tree of graphic elements, and an initial box size (our initial state), representing the size of the root element. The return value is a tree whose generic argument is a tuple of state-content values. The state is the `Box` representing the size allocated to that tree and the value is the generic parameter `T` that we're currently filling with characters to distinguish a leaf from another leaf.
+The function takes a tree, which in this case we can imagine being a visual tree of graphic elements, and an initial box size (our initial state), representing the size of the root element. 
+The return value is a tree whose generic argument is a tuple of state-content values. 
+The state is the `Box` representing the size allocated to that tree and the value is the generic parameter `T` that we're currently filling with characters to distinguish a leaf from another leaf.
 
 As we did with the labeling problem the entry function will finally delegate to a helper function that will call itself recursively. We can thus define the body of the previous function as follows:
 
@@ -92,7 +103,12 @@ If the current tree is a _branch_ then:
 4. update the state by doubling the height of the current box
 5. return an instance of the state monad whose value is a branch with the results of steps 2 and 3 as the left and right trees, respectively
 
-Let's go through a simple example to understand better. Assuming to start with a box of size 200 x 400 (W x H) and that the root element of the tree we want to process is a branch, we halve the available height and process left and right trees using 200 as the available height for each of them. If at some point we come across a leaf we use whatever current value of the state we have at that point during the computation (if both left and right trees are leaves then each of them will get a height of 200). When we're done with the two trees we restore the original height by multiplying it by two, and so on recursively. This leads exactly to the solution we're looking for. In code:
+Let's go through a simple example to understand better. 
+Assuming to start with a box of size 200 x 400 (W x H) and that the root element of the tree we want to process is a branch, 
+we halve the available height and process the left and right trees using 200 as the available height for each of them. 
+If at some point we come across a leaf we use whatever current value of the state we have at that point during the computation 
+(if both left and right trees are leaves then each of them will get a height of 200). When we're done with the two trees we restore the original height by multiplying it by two. 
+This leads exactly to the solution we're looking for.
 
 ```csharp
 public S<Box, Tree<StateContent<Box, T>>> MConstrainedBox1<T>(Tree<T> tree)
@@ -131,7 +147,7 @@ public S<Box, Tree<StateContent<Box, T>>> MConstrainedBox1<T>(Tree<T> tree)
 }
 ```
 
-Now if we run the computation against the same old tree
+Now if we run the computation against the same old tree:
 
 ```csharp
 var tree = branch(     
@@ -145,7 +161,7 @@ var tree = branch(
 MConstrainedBox(tree, new Box(200, 400)).Show();
 ```
 
-the result we obtain is the same we obtained using WPF
+the result we obtain is the same we obtained using WPF:
 
 ```
 Branch:
@@ -157,5 +173,9 @@ Branch:
     Leaf: { State = { Width = 200, Height = 100 }, Value = d }
 ```
 
-[previous]: TODO
+The [full source code][source] is as usual available as a gist containing a LINQPad query that you can download an run right away. 
+In the next post we'll do a step forward in defining a self-contained monad type before moving on to more interesting and challenging exercises.
+
+[previous]: /blog/2013/04/07/labeling-trees-exercise-1
 [WPF example]: http://share.linqpad.net/f2d3sg.linq
+[source]: https://gist.github.com/simoneb/5332234/51fcfafaa8bf911d70cb50978d06a29d8e1492db
